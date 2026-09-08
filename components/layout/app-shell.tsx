@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { ReactNode } from "react";
 import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { FormEvent, useEffect, useState } from "react";
 import { Menu, MessageCircle, Search, ShieldCheck, Star } from "lucide-react";
 import { signOut } from "next-auth/react";
 
@@ -26,7 +28,20 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [search, setSearch] = useState("");
   const isAuthRoute = pathname.startsWith("/auth");
+
+  useEffect(() => {
+    if (pathname !== "/search") setSearch("");
+  }, [pathname]);
+
+  function submitSearch(event: FormEvent) {
+    event.preventDefault();
+    const query = search.trim();
+    if (!query) return;
+    router.push(`/search?q=${encodeURIComponent(query)}`);
+  }
 
   if (isAuthRoute) {
     return (
@@ -132,13 +147,17 @@ export function AppShell({ children }: AppShellProps) {
               Log out
             </button>
           </div>
-          <label className="mt-4 flex w-full max-w-xl items-center gap-2 rounded-2xl border border-stroke bg-white px-4 py-3 shadow-card focus-within:border-accent">
+          <form onSubmit={submitSearch} className="mt-4 flex w-full max-w-xl items-center gap-2 rounded-2xl border border-stroke bg-white px-4 py-3 shadow-card focus-within:border-accent">
             <Search className="h-4 w-4 text-ink-soft" />
             <input
+              aria-label="Search Loop"
               placeholder="Search listings, rides, study groups..."
               className="w-full bg-transparent text-sm font-semibold text-ink outline-none placeholder:text-ink-soft"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
             />
-          </label>
+            <button type="submit" className="text-xs font-extrabold text-accent hover:text-ink">Search</button>
+          </form>
         </header>
         <main>{children}</main>
       </div>

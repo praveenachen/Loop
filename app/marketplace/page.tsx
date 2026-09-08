@@ -1,7 +1,7 @@
  "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
-import { Filter, Plus, Search, Tag } from "lucide-react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { Plus, Search, Tag } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { LoopPageFrame } from "@/components/shared/loop-page-frame";
@@ -17,6 +17,8 @@ export default function MarketplacePage() {
   const router = useRouter();
   const [marketplaceListings, setMarketplaceListings] = useState<MarketplaceListing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("Browse");
+  const [activeFilter, setActiveFilter] = useState("All categories");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState("");
@@ -40,6 +42,15 @@ export default function MarketplacePage() {
     }
     void load();
   }, [loadListings]);
+
+  const filteredListings = useMemo(() => {
+    return marketplaceListings.filter((item) => {
+      if (activeTab === "Sell" && !item.isOwner) return false;
+      if (activeTab === "Requests" && item.category.toLowerCase() !== "requests") return false;
+      if (activeFilter !== "All categories" && item.category.toLowerCase() !== activeFilter.toLowerCase()) return false;
+      return true;
+    });
+  }, [activeFilter, activeTab, marketplaceListings]);
 
   async function createListing(event: FormEvent) {
     event.preventDefault();
@@ -98,20 +109,20 @@ export default function MarketplacePage() {
       mascotSrc="/geese/goose-trophy.png"
       mascotAlt="Marketplace goose mascot"
       tabs={["Browse", "Sell", "Requests"]}
-      activeTab="Browse"
-      filters={["All categories", "Textbooks", "Furniture", "Electronics", "Requests", "Near me"]}
+      activeTab={activeTab}
+      onTabChange={(tab) => {
+        setActiveTab(tab);
+        if (tab === "Requests") setActiveFilter("All categories");
+      }}
+      filters={["All categories", "Textbooks", "Furniture", "Electronics", "Requests"]}
+      activeFilter={activeFilter}
+      onFilterChange={setActiveFilter}
       tone="marketplace"
       actions={
-        <>
-          <Button variant="secondary">
-            <Filter className="mr-2 h-4 w-4" />
-            Advanced Filters
-          </Button>
-          <Button variant="marketplace" onClick={() => { setFeedback(""); setDialogOpen(true); }}>
+        <Button variant="marketplace" onClick={() => { setFeedback(""); setDialogOpen(true); }}>
             <Plus className="mr-2 h-4 w-4" />
             Create Listing
-          </Button>
-        </>
+        </Button>
       }
     >
       <div className="space-y-4">
@@ -119,7 +130,7 @@ export default function MarketplacePage() {
         <div className="flex flex-wrap items-center gap-2">
           <span className="loop-pill bg-marketplace/10 text-marketplace">
             <Tag className="h-4 w-4" />
-            248 active listings
+            {filteredListings.length} {activeTab === "Sell" ? "your" : "active"} listings
           </span>
           <span className="loop-pill">
             <Search className="h-4 w-4" />
@@ -128,11 +139,11 @@ export default function MarketplacePage() {
         </div>
         <h2 className="font-display text-2xl font-semibold text-ink">Latest Campus Listings</h2>
         {loading ? <p className="text-sm font-semibold text-ink-soft">Loading listings...</p> : null}
-        {!loading && marketplaceListings.length === 0 ? (
-          <p className="text-sm font-semibold text-ink-soft">No listings yet. Use Beta Lab to create one.</p>
+        {!loading && filteredListings.length === 0 ? (
+          <p className="text-sm font-semibold text-ink-soft">No listings match this view.</p>
         ) : null}
         <div className="grid gap-4 xl:grid-cols-2">
-          {marketplaceListings.map((item) => (
+          {filteredListings.map((item) => (
             <ListingCard
               key={item.id}
               accent="marketplace"

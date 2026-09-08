@@ -4,14 +4,17 @@ import { Sparkles } from "lucide-react";
 import { GooseImage } from "@/components/brand/goose-image";
 import { cn } from "@/lib/utils";
 
-interface LoopPageFrameProps {
+  interface LoopPageFrameProps {
   title: string;
   subtitle: string;
   mascotSrc: string;
   mascotAlt: string;
   tabs: string[];
   activeTab: string;
+  onTabChange?: (tab: string) => void;
   filters?: string[];
+  activeFilter?: string;
+  onFilterChange?: (filter: string) => void;
   actions?: ReactNode;
   children: ReactNode;
   tone?: "marketplace" | "rides" | "study" | "neutral";
@@ -31,7 +34,10 @@ export function LoopPageFrame({
   mascotAlt,
   tabs,
   activeTab,
+  onTabChange,
   filters,
+  activeFilter,
+  onFilterChange,
   actions,
   children,
   tone = "neutral"
@@ -63,6 +69,9 @@ export function LoopPageFrame({
           {tabs.map((tab) => (
             <button
               key={tab}
+              type="button"
+              onClick={() => onTabChange?.(tab)}
+              aria-pressed={tab === activeTab}
               className={cn(
                 "rounded-full px-4 py-2 text-sm font-extrabold transition md:text-base",
                 tab === activeTab ? "bg-ink text-white" : "bg-surface-soft text-ink-soft hover:text-ink"
@@ -78,7 +87,16 @@ export function LoopPageFrame({
         <section className="loop-panel p-3">
           <div className="flex flex-wrap gap-2">
             {filters.map((filter) => (
-              <button key={filter} className="loop-pill bg-surface-soft">
+              <button
+                key={filter}
+                type="button"
+                onClick={() => onFilterChange?.(filter)}
+                aria-pressed={filter === activeFilter}
+                className={cn(
+                  "loop-pill",
+                  filter === activeFilter ? "border-ink/20 bg-ink text-white hover:text-white" : "bg-surface-soft"
+                )}
+              >
                 {filter}
               </button>
             ))}

@@ -1,7 +1,7 @@
  "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Edit3, ShieldCheck, Trophy } from "lucide-react";
+import { Edit3, Trophy } from "lucide-react";
 
 import { LoopPageFrame } from "@/components/shared/loop-page-frame";
 import { ProfileSummaryCard } from "@/components/shared/profile-summary-card";
@@ -26,6 +26,8 @@ export default function ProfilePage() {
     avatar: ""
   });
   const [status, setStatus] = useState<string>("");
+  const [activeTab, setActiveTab] = useState("Overview");
+  const [activeFilter, setActiveFilter] = useState("All activity");
 
   useEffect(() => {
     async function load() {
@@ -58,6 +60,12 @@ export default function ProfilePage() {
     }));
   }, [profile?.reviews]);
 
+  const filteredReviews = useMemo(() => {
+    if (activeFilter === "All activity") return reviews;
+    const term = activeFilter === "Study groups" ? "study" : activeFilter.toLowerCase();
+    return reviews.filter((review) => `${review.subject} ${review.body}`.toLowerCase().includes(term));
+  }, [activeFilter, reviews]);
+
   async function saveProfile() {
     setSaving(true);
     setStatus("");
@@ -87,15 +95,14 @@ export default function ProfilePage() {
       mascotSrc="/geese/goose-trophy.png"
       mascotAlt="Trophy goose mascot"
       tabs={["Overview", "Reviews", "History", "Verification"]}
-      activeTab="Overview"
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
       filters={["All activity", "Marketplace", "Rides", "Study groups"]}
+      activeFilter={activeFilter}
+      onFilterChange={setActiveFilter}
       tone="neutral"
       actions={
         <>
-          <Button variant="secondary">
-            <ShieldCheck className="mr-2 h-4 w-4" />
-            Verification Settings
-          </Button>
           <Button onClick={() => setEditing((v) => !v)}>
             <Edit3 className="mr-2 h-4 w-4" />
             {editing ? "Close Editor" : "Edit Profile"}
@@ -104,13 +111,13 @@ export default function ProfilePage() {
       }
     >
       <div className="space-y-4">
-        <div className="rounded-2xl border border-stroke bg-surface-soft p-4">
+        {activeTab !== "Reviews" && activeTab !== "History" ? <div className="rounded-2xl border border-stroke bg-surface-soft p-4">
           <p className="inline-flex items-center gap-2 text-sm font-extrabold text-ink">
             <Trophy className="h-4 w-4 text-warning" />
             Reputation moves with you
           </p>
           <p className="mt-1 text-sm text-ink-soft">Trust is shared across marketplace deals, rides completed, and study groups hosted.</p>
-        </div>
+        </div> : null}
         {loading ? <p className="text-sm font-semibold text-ink-soft">Loading profile...</p> : null}
         {editing ? (
           <div className="rounded-2xl border border-stroke bg-white p-4 shadow-card">
@@ -150,16 +157,16 @@ export default function ProfilePage() {
             </div>
           </div>
         ) : null}
-        {profile?.user ? <ProfileSummaryCard user={profile.user} /> : null}
+        {profile?.user && activeTab !== "Reviews" ? <ProfileSummaryCard user={profile.user} /> : null}
         {!loading && !profile?.user ? <p className="text-sm font-semibold text-ink-soft">Profile not available.</p> : null}
-        {!loading && reviews.length === 0 ? (
+        {!loading && filteredReviews.length === 0 && (activeTab === "Overview" || activeTab === "Reviews") ? (
           <p className="text-sm font-semibold text-ink-soft">No reviews yet for this account.</p>
         ) : null}
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {reviews.map((review) => (
+        {activeTab === "Overview" || activeTab === "Reviews" ? <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {filteredReviews.map((review) => (
             <ReviewSnippet key={review.id} review={review} />
           ))}
-        </div>
+        </div> : null}
       </div>
     </LoopPageFrame>
   );

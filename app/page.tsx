@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { BookOpen, Car, MessageCircle, ShoppingBag, Sparkles } from "lucide-react";
 
@@ -38,7 +39,9 @@ const quickActions = [
 ];
 
 export default function HomePage() {
+  const router = useRouter();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [activeTab, setActiveTab] = useState("Overview");
 
   useEffect(() => {
     async function loadUser() {
@@ -57,17 +60,18 @@ export default function HomePage() {
       mascotSrc="/geese/goose-backpack.png"
       mascotAlt="Backpack goose mascot"
       tabs={["Overview", "Recent Activity", "Safety + Trust"]}
-      activeTab="Overview"
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
       tone="neutral"
       actions={
         <>
-          <Button variant="secondary">Check Safety Center</Button>
-          <Button>Post Something</Button>
+          <Button variant="secondary" onClick={() => setActiveTab("Safety + Trust")}>Check Safety Center</Button>
+          <Button onClick={() => router.push("/marketplace")}>Post Something</Button>
         </>
       }
     >
       <div className="space-y-6">
-        <div className="grid gap-4 lg:grid-cols-3">
+        {activeTab === "Overview" ? <div className="grid gap-4 lg:grid-cols-3">
           {quickActions.map((action) => {
             const Icon = action.icon;
             return (
@@ -88,9 +92,9 @@ export default function HomePage() {
               </Link>
             );
           })}
-        </div>
+        </div> : null}
 
-        <h2 className="font-display text-3xl font-semibold text-ink">Recent Activity</h2>
+        {activeTab !== "Safety + Trust" ? <><h2 className="font-display text-3xl font-semibold text-ink">Recent Activity</h2>
         <div className="grid gap-4 xl:grid-cols-3">
           {[
             "RIDE - Waterloo to Mississauga",
@@ -105,9 +109,9 @@ export default function HomePage() {
               </Button>
             </article>
           ))}
-        </div>
+        </div></> : null}
 
-        <div className="rounded-2xl border border-stroke bg-white p-4">
+        {activeTab !== "Recent Activity" ? <div className="rounded-2xl border border-stroke bg-white p-4">
           <p className="mb-3 inline-flex items-center gap-2 text-sm font-extrabold text-ink">
             <Sparkles className="h-4 w-4 text-accent" />
             Message pulse
@@ -125,7 +129,7 @@ export default function HomePage() {
               </div>
             ))}
           </div>
-        </div>
+        </div> : null}
       </div>
     </LoopPageFrame>
   );

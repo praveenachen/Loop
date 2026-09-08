@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { Car, CalendarClock, Plus, Shield } from "lucide-react";
+import { Car, CalendarClock, Plus } from "lucide-react";
 
 import { LoopPageFrame } from "@/components/shared/loop-page-frame";
 import { RideCard } from "@/components/shared/ride-card";
@@ -10,7 +10,8 @@ import { Dialog } from "@/components/ui/dialog";
 import { RideListing } from "@/types";
 
 export default function RidesPage() {
-  const [mode, setMode] = useState<"Request a Ride" | "Offer to Drive">("Request a Ride");
+  const [mode, setMode] = useState<"Request a Ride" | "Offer to Drive" | "History">("Request a Ride");
+  const [activeFilter, setActiveFilter] = useState("All rides");
   const [rideListings, setRideListings] = useState<RideListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -92,8 +93,16 @@ export default function RidesPage() {
   }
 
   const filteredRides = useMemo(() => {
-    return rideListings.filter((ride) => (mode === "Request a Ride" ? ride.mode !== "request" : ride.mode === "request"));
-  }, [mode, rideListings]);
+    return rideListings.filter((ride) => {
+      if (mode === "Request a Ride" && ride.mode === "request") return false;
+      if (mode === "Offer to Drive" && ride.mode !== "request") return false;
+      if (mode === "History" && !ride.isOwner && !ride.requestedByCurrentUser) return false;
+      if (activeFilter === "Seats open" && (ride.seats <= 0 || ride.seatStatus !== "seats-open")) return false;
+      if (activeFilter === "Under $20" && ride.pricePerSeat >= 20) return false;
+      if (activeFilter === "Top rated" && ride.driver.rating < 4.9) return false;
+      return true;
+    });
+  }, [activeFilter, mode, rideListings]);
 
   return (
     <LoopPageFrame
@@ -103,19 +112,16 @@ export default function RidesPage() {
       mascotAlt="Driver goose mascot"
       tabs={["Request a Ride", "Offer to Drive", "History"]}
       activeTab={mode}
-      filters={["Start", "End", "Date", "Budget", "Women-only", "Top rated drivers"]}
+      onTabChange={(tab) => setMode(tab as typeof mode)}
+      filters={["All rides", "Seats open", "Under $20", "Top rated"]}
+      activeFilter={activeFilter}
+      onFilterChange={setActiveFilter}
       tone="rides"
       actions={
-        <>
-          <Button variant="secondary">
-            <Shield className="mr-2 h-4 w-4" />
-            Safety Rules
-          </Button>
-          <Button variant="rides" onClick={() => openCreateDialog(mode === "Request a Ride" ? "OFFER" : "REQUEST")}>
+        <Button variant="rides" onClick={() => openCreateDialog(mode === "Offer to Drive" ? "REQUEST" : "OFFER")}>
             <Plus className="mr-2 h-4 w-4" />
-            {mode === "Request a Ride" ? "Offer a Trip" : "Request a Trip"}
-          </Button>
-        </>
+            {mode === "Offer to Drive" ? "Request a Trip" : "Offer a Trip"}
+        </Button>
       }
     >
       <div className="space-y-4">
@@ -123,7 +129,7 @@ export default function RidesPage() {
         <div className="flex flex-wrap gap-2">
           <span className="loop-pill bg-rides/30 text-ink">
             <Car className="h-4 w-4" />
-            {mode === "Request a Ride" ? "Current ride options" : "Current ride requests"}
+            {mode === "Request a Ride" ? "Current ride options" : mode === "Offer to Drive" ? "Current ride requests" : "Your ride activity"}
           </span>
           <span className="loop-pill">
             <CalendarClock className="h-4 w-4" />
@@ -131,7 +137,7 @@ export default function RidesPage() {
           </span>
         </div>
         <h2 className="font-display text-2xl font-semibold text-ink">
-          {mode === "Request a Ride" ? "Open Ride Listings" : "Open Drive Offers"}
+          {mode === "Request a Ride" ? "Open Ride Listings" : mode === "Offer to Drive" ? "Open Ride Requests" : "Your Ride History"}
         </h2>
         {loading ? <p className="text-sm font-semibold text-ink-soft">Loading rides...</p> : null}
         {!loading && filteredRides.length === 0 ? (

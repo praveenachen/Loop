@@ -1,7 +1,7 @@
  "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
-import { BookOpen, Lightbulb, Plus } from "lucide-react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { BookOpen, Plus } from "lucide-react";
 
 import { LoopPageFrame } from "@/components/shared/loop-page-frame";
 import { StudyCard } from "@/components/shared/study-card";
@@ -12,6 +12,8 @@ import { StudyGroup } from "@/types";
 export default function StudyGroupsPage() {
   const [studyGroups, setStudyGroups] = useState<StudyGroup[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("Find a Team");
+  const [activeFilter, setActiveFilter] = useState("All courses");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState("");
@@ -35,6 +37,16 @@ export default function StudyGroupsPage() {
     }
     void load();
   }, [loadGroups]);
+
+  const filteredGroups = useMemo(() => {
+    return studyGroups.filter((group) => {
+      if (activeTab === "Your History" && !group.isOwner && !group.joinedByCurrentUser) return false;
+      if (activeTab === "Create a Request" && !group.isOwner) return false;
+      if (activeFilter === "Open spots" && group.seatsLeft <= 0) return false;
+      if (activeFilter !== "All courses" && activeFilter !== "Open spots" && group.course !== activeFilter) return false;
+      return true;
+    });
+  }, [activeFilter, activeTab, studyGroups]);
 
   async function createGroup(event: FormEvent) {
     event.preventDefault();
@@ -90,20 +102,20 @@ export default function StudyGroupsPage() {
       mascotSrc="/geese/goose-reader.png"
       mascotAlt="Reader goose mascot"
       tabs={["Find a Team", "Create a Request", "Your History"]}
-      activeTab="Find a Team"
-      filters={["SYDE 121", "ECE 105", "CS 341", "STAT 231", "Tonight", "This week"]}
+      activeTab={activeTab}
+      onTabChange={(tab) => {
+        setActiveTab(tab);
+        if (tab === "Create a Request") setDialogOpen(true);
+      }}
+      filters={["All courses", "Open spots", "SYDE 121", "ECE 105", "CS 341", "STAT 231"]}
+      activeFilter={activeFilter}
+      onFilterChange={setActiveFilter}
       tone="study"
       actions={
-        <>
-          <Button variant="secondary">
-            <Lightbulb className="mr-2 h-4 w-4" />
-            Study tips
-          </Button>
-          <Button variant="study" onClick={() => { setFeedback(""); setDialogOpen(true); }}>
+        <Button variant="study" onClick={() => { setFeedback(""); setDialogOpen(true); }}>
             <Plus className="mr-2 h-4 w-4" />
             Create Group
-          </Button>
-        </>
+        </Button>
       }
     >
       <div className="space-y-4">
@@ -114,11 +126,11 @@ export default function StudyGroupsPage() {
         </p>
         <h2 className="font-display text-2xl font-semibold text-ink">Featured Study Sessions</h2>
         {loading ? <p className="text-sm font-semibold text-ink-soft">Loading groups...</p> : null}
-        {!loading && studyGroups.length === 0 ? (
-          <p className="text-sm font-semibold text-ink-soft">No groups yet. Use Beta Lab to create one.</p>
+        {!loading && filteredGroups.length === 0 ? (
+          <p className="text-sm font-semibold text-ink-soft">No study groups match this view.</p>
         ) : null}
         <div className="space-y-4">
-          {studyGroups.map((group) => (
+          {filteredGroups.map((group) => (
             <StudyCard key={group.id} group={group} actionPending={pendingGroupId === group.id} onJoin={joinGroup} />
           ))}
         </div>
