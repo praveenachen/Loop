@@ -1,12 +1,13 @@
  "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Edit3, Trophy } from "lucide-react";
 
 import { LoopPageFrame } from "@/components/shared/loop-page-frame";
 import { ProfileSummaryCard } from "@/components/shared/profile-summary-card";
 import { ReviewSnippet } from "@/components/shared/review-snippet";
 import { Button } from "@/components/ui/button";
+import { EmptyState, ErrorState, FeedbackBanner, LoadingState } from "@/components/ui/async-state";
 import { Review, User } from "@/types";
 
 interface ProfileResponse {
@@ -17,6 +18,7 @@ interface ProfileResponse {
 export default function ProfilePage() {
   const [profile, setProfile] = useState<ProfileResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -25,13 +27,14 @@ export default function ProfilePage() {
     year: "",
     avatar: ""
   });
-  const [status, setStatus] = useState<string>("");
+  const [status, setStatus] = useState<{ message: string; tone: "success" | "error" } | null>(null);
   const [activeTab, setActiveTab] = useState("Overview");
   const [activeFilter, setActiveFilter] = useState("All activity");
 
-  useEffect(() => {
-    async function load() {
-      try {
+  const loadProfile = useCallback(async () => {
+    setLoading(true);
+    setLoadError("");
+    try {
         const res = await fetch("/api/profile/me", { cache: "no-store" });
         if (!res.ok) throw new Error("Failed to load profile");
         const data = (await res.json()) as ProfileResponse;
@@ -42,12 +45,16 @@ export default function ProfilePage() {
           year: data.user.year,
           avatar: data.user.avatar
         });
-      } finally {
-        setLoading(false);
-      }
+    } catch {
+      setLoadError("Your profile could not be loaded. Check your connection and try again.");
+    } finally {
+      setLoading(false);
     }
-    void load();
   }, []);
+
+  useEffect(() => {
+    void loadProfile();
+  }, [loadProfile]);
 
   const reviews = useMemo(() => {
     return (profile?.reviews ?? []).map((review) => ({
@@ -68,7 +75,7 @@ export default function ProfilePage() {
 
   async function saveProfile() {
     setSaving(true);
-    setStatus("");
+    setStatus(null);
     try {
       const res = await fetch("/api/profile/me", {
         method: "PATCH",
@@ -77,12 +84,14 @@ export default function ProfilePage() {
       });
       const payload = (await res.json()) as User | { error?: string };
       if (!res.ok) {
-        setStatus((payload as { error?: string }).error ?? "Failed to update profile.");
+        setStatus({ message: (payload as { error?: string }).error ?? "Failed to update profile.", tone: "error" });
         return;
       }
       setProfile((prev) => (prev ? { ...prev, user: payload as User } : prev));
       setEditing(false);
-      setStatus("Profile updated.");
+      setStatus({ message: "Profile updated.", tone: "success" });
+    } catch {
+      setStatus({ message: "Could not reach the server. Please try again.", tone: "error" });
     } finally {
       setSaving(false);
     }
@@ -118,7 +127,8 @@ export default function ProfilePage() {
           </p>
           <p className="mt-1 text-sm text-ink-soft">Trust is shared across marketplace deals, rides completed, and study groups hosted.</p>
         </div> : null}
-        {loading ? <p className="text-sm font-semibold text-ink-soft">Loading profile...</p> : null}
+        {loading ? <LoadingState label="Loading profile..." rows={2} /> : null}
+        {!loading && loadError ? <ErrorState message={loadError} onRetry={() => void loadProfile()} retrying={loading} /> : null}
         {editing ? (
           <div className="rounded-2xl border border-stroke bg-white p-4 shadow-card">
             <p className="mb-3 text-sm font-extrabold uppercase tracking-[0.1em] text-ink-soft">Edit Profile</p>
@@ -153,14 +163,14 @@ export default function ProfilePage() {
               <Button onClick={saveProfile} disabled={saving}>
                 {saving ? "Saving..." : "Save Changes"}
               </Button>
-              {status ? <p className="text-sm font-semibold text-ink-soft">{status}</p> : null}
+              {status ? <FeedbackBanner message={status.message} tone={status.tone} /> : null}
             </div>
           </div>
         ) : null}
         {profile?.user && activeTab !== "Reviews" ? <ProfileSummaryCard user={profile.user} /> : null}
-        {!loading && !profile?.user ? <p className="text-sm font-semibold text-ink-soft">Profile not available.</p> : null}
-        {!loading && filteredReviews.length === 0 && (activeTab === "Overview" || activeTab === "Reviews") ? (
-          <p className="text-sm font-semibold text-ink-soft">No reviews yet for this account.</p>
+        {!loading && !loadError && !profile?.user ? <EmptyState title="Profile unavailable" message="No profile data was found for this account." /> : null}
+        {!loading && !loadError && filteredReviews.length === 0 && (activeTab === "Overview" || activeTab === "Reviews") ? (
+          <EmptyState title="No matching reviews" message="Try another activity filter." />
         ) : null}
         {activeTab === "Overview" || activeTab === "Reviews" ? <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {filteredReviews.map((review) => (

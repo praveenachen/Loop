@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 
 import { LoopPageFrame } from "@/components/shared/loop-page-frame";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/async-state";
 import { MarketplaceListing, RideListing, StudyGroup } from "@/types";
 
 type SearchTab = "All results" | "Marketplace" | "Rides" | "Study Groups";
@@ -23,11 +24,12 @@ function SearchResults() {
   const [rides, setRides] = useState<RideListing[]>([]);
   const [groups, setGroups] = useState<StudyGroup[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      try {
+  const loadSearchData = useCallback(async () => {
+    setLoading(true);
+    setLoadError("");
+    try {
         const responses = await Promise.all([
           fetch("/api/marketplace/listings", { cache: "no-store" }),
           fetch("/api/rides", { cache: "no-store" }),
@@ -38,12 +40,16 @@ function SearchResults() {
         setMarketplace(listingData as MarketplaceListing[]);
         setRides(rideData as RideListing[]);
         setGroups(groupData as StudyGroup[]);
-      } finally {
-        setLoading(false);
-      }
+    } catch {
+      setLoadError("Search results could not be loaded. Check your connection and try again.");
+    } finally {
+      setLoading(false);
     }
-    void load();
   }, []);
+
+  useEffect(() => {
+    void loadSearchData();
+  }, [loadSearchData]);
 
   const results = useMemo(() => {
     if (!normalizedQuery) return { marketplace: [], rides: [], groups: [] };
@@ -58,6 +64,7 @@ function SearchResults() {
   const showMarketplace = activeTab === "All results" || activeTab === "Marketplace";
   const showRides = activeTab === "All results" || activeTab === "Rides";
   const showGroups = activeTab === "All results" || activeTab === "Study Groups";
+  const visibleTotal = (showMarketplace ? results.marketplace.length : 0) + (showRides ? results.rides.length : 0) + (showGroups ? results.groups.length : 0);
 
   return (
     <LoopPageFrame
@@ -73,11 +80,13 @@ function SearchResults() {
       <div className="space-y-6">
         <p className="inline-flex items-center gap-2 text-sm font-extrabold text-ink-soft">
           <Search className="h-4 w-4 text-accent" />
-          {loading ? "Searching..." : `${total} result${total === 1 ? "" : "s"} found`}
+          {loading ? "Searching..." : `${visibleTotal} result${visibleTotal === 1 ? "" : "s"} found`}
         </p>
-        {!loading && query && total === 0 ? <p className="text-sm font-semibold text-ink-soft">No results match this search.</p> : null}
+        {loading ? <LoadingState label="Searching Loop..." rows={2} /> : null}
+        {!loading && loadError ? <ErrorState message={loadError} onRetry={() => void loadSearchData()} retrying={loading} /> : null}
+        {!loading && !loadError && query && visibleTotal === 0 ? <EmptyState title="No matching results" message="Try a broader route, course, item, location, or student name." /> : null}
 
-        {showMarketplace && results.marketplace.length > 0 ? (
+        {!loading && !loadError && showMarketplace && results.marketplace.length > 0 ? (
           <section>
             <h2 className="mb-3 font-display text-2xl font-semibold text-ink">Marketplace</h2>
             <div className="grid gap-3 md:grid-cols-2">
@@ -91,7 +100,7 @@ function SearchResults() {
           </section>
         ) : null}
 
-        {showRides && results.rides.length > 0 ? (
+        {!loading && !loadError && showRides && results.rides.length > 0 ? (
           <section>
             <h2 className="mb-3 font-display text-2xl font-semibold text-ink">Rides</h2>
             <div className="grid gap-3 md:grid-cols-2">
@@ -105,7 +114,7 @@ function SearchResults() {
           </section>
         ) : null}
 
-        {showGroups && results.groups.length > 0 ? (
+        {!loading && !loadError && showGroups && results.groups.length > 0 ? (
           <section>
             <h2 className="mb-3 font-display text-2xl font-semibold text-ink">Study Groups</h2>
             <div className="grid gap-3 md:grid-cols-2">

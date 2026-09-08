@@ -22,19 +22,24 @@ function SignInForm() {
     setLoading(true);
     setError(null);
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-      callbackUrl
-    });
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+        callbackUrl
+      });
 
-    setLoading(false);
-    if (result?.error) {
-      setError("Invalid credentials or non-UW email.");
-      return;
+      if (result?.error) {
+        setError("Invalid credentials or non-UW email.");
+        return;
+      }
+      router.push(callbackUrl);
+    } catch {
+      setError("Loop could not reach the sign-in service. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    router.push(callbackUrl);
   }
 
   return (

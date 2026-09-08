@@ -1,11 +1,12 @@
  "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { MessageSquare } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import { ChatPreviewCard } from "@/components/shared/chat-preview-card";
 import { LoopPageFrame } from "@/components/shared/loop-page-frame";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/async-state";
 import { ChatPreview } from "@/types";
 
 function MessagesContent() {
@@ -13,22 +14,28 @@ function MessagesContent() {
   const selectedConversationId = searchParams.get("conversation");
   const [chats, setChats] = useState<ChatPreview[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [activeTab, setActiveTab] = useState("Inbox");
   const [activeFilter, setActiveFilter] = useState("All messages");
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch("/api/messages/previews", { cache: "no-store" });
-        if (!res.ok) throw new Error("Failed to load chats");
-        const data = (await res.json()) as ChatPreview[];
-        setChats(data);
-      } finally {
-        setLoading(false);
-      }
+  const loadChats = useCallback(async () => {
+    setLoading(true);
+    setLoadError("");
+    try {
+      const res = await fetch("/api/messages/previews", { cache: "no-store" });
+      if (!res.ok) throw new Error("Failed to load chats");
+      const data = (await res.json()) as ChatPreview[];
+      setChats(data);
+    } catch {
+      setLoadError("Conversations could not be loaded. Check your connection and try again.");
+    } finally {
+      setLoading(false);
     }
-    void load();
   }, []);
+
+  useEffect(() => {
+    void loadChats();
+  }, [loadChats]);
 
   useEffect(() => {
     if (!selectedConversationId || chats.length === 0) return;
@@ -71,17 +78,18 @@ function MessagesContent() {
           </p>
           <p className="mt-1 text-sm text-ink-soft">Only verified users can start or continue conversations in Loop.</p>
         </div>
-        {loading ? <p className="text-sm font-semibold text-ink-soft">Loading conversations...</p> : null}
-        {!loading && filteredChats.length === 0 ? (
-          <p className="text-sm font-semibold text-ink-soft">No conversations match this view.</p>
+        {loading ? <LoadingState label="Loading conversations..." rows={2} /> : null}
+        {!loading && loadError ? <ErrorState message={loadError} onRetry={() => void loadChats()} retrying={loading} /> : null}
+        {!loading && !loadError && filteredChats.length === 0 ? (
+          <EmptyState title="No matching conversations" message="Try another inbox filter or contact a marketplace seller." />
         ) : null}
-        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+        {!loading && !loadError ? <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
           {filteredChats.map((chat) => (
             <div key={chat.id} id={`conversation-${chat.id}`} className="relative scroll-mt-6">
               <ChatPreviewCard chat={chat} highlighted={chat.id === selectedConversationId} />
             </div>
           ))}
-        </div>
+        </div> : null}
       </div>
     </LoopPageFrame>
   );

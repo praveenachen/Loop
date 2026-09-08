@@ -6,6 +6,7 @@ import { Car, CalendarClock, Plus } from "lucide-react";
 import { LoopPageFrame } from "@/components/shared/loop-page-frame";
 import { RideCard } from "@/components/shared/ride-card";
 import { Button } from "@/components/ui/button";
+import { EmptyState, ErrorState, FeedbackBanner, LoadingState } from "@/components/ui/async-state";
 import { Dialog } from "@/components/ui/dialog";
 import { RideListing } from "@/types";
 
@@ -14,40 +15,42 @@ export default function RidesPage() {
   const [activeFilter, setActiveFilter] = useState("All rides");
   const [rideListings, setRideListings] = useState<RideListing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [feedback, setFeedback] = useState("");
+  const [feedback, setFeedback] = useState<{ message: string; tone: "success" | "error" } | null>(null);
   const [pendingRideId, setPendingRideId] = useState<string | null>(null);
   const [form, setForm] = useState({ route: "", departure: "", pricePerSeat: 0, seats: 1, car: "", mode: "OFFER" as "OFFER" | "REQUEST" });
 
   const loadRides = useCallback(async () => {
-    const res = await fetch("/api/rides", { cache: "no-store" });
-    if (!res.ok) throw new Error("Failed to load rides");
-    const data = (await res.json()) as RideListing[];
-    setRideListings(data);
+    setLoading(true);
+    setLoadError("");
+    try {
+      const res = await fetch("/api/rides", { cache: "no-store" });
+      if (!res.ok) throw new Error("Failed to load rides");
+      const data = (await res.json()) as RideListing[];
+      setRideListings(data);
+    } catch {
+      setLoadError("Ride listings could not be loaded. Check your connection and try again.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    async function load() {
-      try {
-        await loadRides();
-      } finally {
-        setLoading(false);
-      }
-    }
-    void load();
+    void loadRides();
   }, [loadRides]);
 
   function openCreateDialog(createMode: "OFFER" | "REQUEST") {
     setForm((current) => ({ ...current, mode: createMode }));
-    setFeedback("");
+    setFeedback(null);
     setDialogOpen(true);
   }
 
   async function createRide(event: FormEvent) {
     event.preventDefault();
     setSubmitting(true);
-    setFeedback("");
+    setFeedback(null);
 
     try {
       const res = await fetch("/api/rides", {
@@ -57,7 +60,7 @@ export default function RidesPage() {
       });
       const payload = (await res.json()) as { error?: string };
       if (!res.ok) {
-        setFeedback(payload.error ?? "Could not publish the ride.");
+        setFeedback({ message: payload.error ?? "Could not publish the ride.", tone: "error" });
         return;
       }
 
@@ -65,9 +68,9 @@ export default function RidesPage() {
       setMode(form.mode === "OFFER" ? "Request a Ride" : "Offer to Drive");
       setForm({ route: "", departure: "", pricePerSeat: 0, seats: 1, car: "", mode: "OFFER" });
       setDialogOpen(false);
-      setFeedback("Ride published successfully.");
+      setFeedback({ message: "Ride published successfully.", tone: "success" });
     } catch {
-      setFeedback("Could not reach the server. Please try again.");
+      setFeedback({ message: "Could not reach the server. Please try again.", tone: "error" });
     } finally {
       setSubmitting(false);
     }
@@ -75,18 +78,18 @@ export default function RidesPage() {
 
   async function requestSeat(ride: RideListing) {
     setPendingRideId(ride.id);
-    setFeedback("");
+    setFeedback(null);
     try {
       const res = await fetch(`/api/rides/${ride.id}/request-seat`, { method: "POST" });
       const payload = (await res.json()) as { error?: string };
       if (!res.ok) {
-        setFeedback(payload.error ?? "Could not request this seat.");
+        setFeedback({ message: payload.error ?? "Could not request this seat.", tone: "error" });
         return;
       }
       await loadRides();
-      setFeedback(`Seat requested for ${ride.route}.`);
+      setFeedback({ message: `Seat requested for ${ride.route}.`, tone: "success" });
     } catch {
-      setFeedback("Could not reach the server. Please try again.");
+      setFeedback({ message: "Could not reach the server. Please try again.", tone: "error" });
     } finally {
       setPendingRideId(null);
     }
@@ -125,7 +128,7 @@ export default function RidesPage() {
       }
     >
       <div className="space-y-4">
-        {feedback && !dialogOpen ? <p className="rounded-xl bg-rides/20 px-4 py-3 text-sm font-semibold text-ink">{feedback}</p> : null}
+        {feedback && !dialogOpen ? <FeedbackBanner message={feedback.message} tone={feedback.tone} /> : null}
         <div className="flex flex-wrap gap-2">
           <span className="loop-pill bg-rides/30 text-ink">
             <Car className="h-4 w-4" />
@@ -139,19 +142,16 @@ export default function RidesPage() {
         <h2 className="font-display text-2xl font-semibold text-ink">
           {mode === "Request a Ride" ? "Open Ride Listings" : mode === "Offer to Drive" ? "Open Ride Requests" : "Your Ride History"}
         </h2>
-        {loading ? <p className="text-sm font-semibold text-ink-soft">Loading rides...</p> : null}
-        {!loading && filteredRides.length === 0 ? (
-          <p className="text-sm font-semibold text-ink-soft">No rides in this tab yet. Use Beta Lab to create one.</p>
+        {loading ? <LoadingState label="Loading rides..." rows={2} /> : null}
+        {!loading && loadError ? <ErrorState message={loadError} onRetry={() => void loadRides()} retrying={loading} /> : null}
+        {!loading && !loadError && filteredRides.length === 0 ? (
+          <EmptyState title="No matching rides" message="Try another filter or publish a trip." />
         ) : null}
-        <div className="space-y-4">
+        {!loading && !loadError ? <div className="space-y-4">
           {filteredRides.map((ride) => (
             <RideCard key={ride.id} ride={ride} actionPending={pendingRideId === ride.id} onRequestSeat={requestSeat} />
           ))}
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <button className="text-sm font-extrabold text-ink-soft hover:text-ink">See more rides...</button>
-          <Button variant="secondary">{mode === "Request a Ride" ? "Can't find a ride? Request one!" : "Want to add a trip?"}</Button>
-        </div>
+        </div> : null}
       </div>
       <Dialog
         open={dialogOpen}
@@ -181,7 +181,7 @@ export default function RidesPage() {
           <label className="block text-sm font-semibold text-ink">{form.mode === "OFFER" ? "Vehicle" : "Ride preference"}
             <input required minLength={2} maxLength={120} placeholder={form.mode === "OFFER" ? "Honda Civic 2020" : "Any verified driver"} className="mt-1 w-full rounded-xl border border-stroke px-3 py-2" value={form.car} onChange={(e) => setForm({ ...form, car: e.target.value })} />
           </label>
-          {feedback ? <p className="text-sm font-semibold text-study">{feedback}</p> : null}
+          {feedback ? <FeedbackBanner message={feedback.message} tone={feedback.tone} /> : null}
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="secondary" onClick={() => setDialogOpen(false)}>Cancel</Button>
             <Button type="submit" variant="rides" disabled={submitting}>{submitting ? "Publishing..." : form.mode === "OFFER" ? "Publish Offer" : "Publish Request"}</Button>

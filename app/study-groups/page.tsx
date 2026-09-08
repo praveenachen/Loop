@@ -6,36 +6,39 @@ import { BookOpen, Plus } from "lucide-react";
 import { LoopPageFrame } from "@/components/shared/loop-page-frame";
 import { StudyCard } from "@/components/shared/study-card";
 import { Button } from "@/components/ui/button";
+import { EmptyState, ErrorState, FeedbackBanner, LoadingState } from "@/components/ui/async-state";
 import { Dialog } from "@/components/ui/dialog";
 import { StudyGroup } from "@/types";
 
 export default function StudyGroupsPage() {
   const [studyGroups, setStudyGroups] = useState<StudyGroup[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [activeTab, setActiveTab] = useState("Find a Team");
   const [activeFilter, setActiveFilter] = useState("All courses");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [feedback, setFeedback] = useState("");
+  const [feedback, setFeedback] = useState<{ message: string; tone: "success" | "error" } | null>(null);
   const [pendingGroupId, setPendingGroupId] = useState<string | null>(null);
   const [form, setForm] = useState({ course: "", title: "", schedule: "", location: "", seatsLeft: 1, focus: "" });
 
   const loadGroups = useCallback(async () => {
-    const res = await fetch("/api/study-groups", { cache: "no-store" });
-    if (!res.ok) throw new Error("Failed to load study groups");
-    const data = (await res.json()) as StudyGroup[];
-    setStudyGroups(data);
+    setLoading(true);
+    setLoadError("");
+    try {
+      const res = await fetch("/api/study-groups", { cache: "no-store" });
+      if (!res.ok) throw new Error("Failed to load study groups");
+      const data = (await res.json()) as StudyGroup[];
+      setStudyGroups(data);
+    } catch {
+      setLoadError("Study groups could not be loaded. Check your connection and try again.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    async function load() {
-      try {
-        await loadGroups();
-      } finally {
-        setLoading(false);
-      }
-    }
-    void load();
+    void loadGroups();
   }, [loadGroups]);
 
   const filteredGroups = useMemo(() => {
@@ -51,7 +54,7 @@ export default function StudyGroupsPage() {
   async function createGroup(event: FormEvent) {
     event.preventDefault();
     setSubmitting(true);
-    setFeedback("");
+    setFeedback(null);
 
     try {
       const res = await fetch("/api/study-groups", {
@@ -61,16 +64,16 @@ export default function StudyGroupsPage() {
       });
       const payload = (await res.json()) as { error?: string };
       if (!res.ok) {
-        setFeedback(payload.error ?? "Could not create the group.");
+        setFeedback({ message: payload.error ?? "Could not create the group.", tone: "error" });
         return;
       }
 
       await loadGroups();
       setForm({ course: "", title: "", schedule: "", location: "", seatsLeft: 1, focus: "" });
       setDialogOpen(false);
-      setFeedback("Study group published successfully.");
+      setFeedback({ message: "Study group published successfully.", tone: "success" });
     } catch {
-      setFeedback("Could not reach the server. Please try again.");
+      setFeedback({ message: "Could not reach the server. Please try again.", tone: "error" });
     } finally {
       setSubmitting(false);
     }
@@ -78,18 +81,18 @@ export default function StudyGroupsPage() {
 
   async function joinGroup(group: StudyGroup) {
     setPendingGroupId(group.id);
-    setFeedback("");
+    setFeedback(null);
     try {
       const res = await fetch(`/api/study-groups/${group.id}/join`, { method: "POST" });
       const payload = (await res.json()) as { error?: string };
       if (!res.ok) {
-        setFeedback(payload.error ?? "Could not join this group.");
+        setFeedback({ message: payload.error ?? "Could not join this group.", tone: "error" });
         return;
       }
       await loadGroups();
-      setFeedback(`You joined ${group.course}: ${group.title}.`);
+      setFeedback({ message: `You joined ${group.course}: ${group.title}.`, tone: "success" });
     } catch {
-      setFeedback("Could not reach the server. Please try again.");
+      setFeedback({ message: "Could not reach the server. Please try again.", tone: "error" });
     } finally {
       setPendingGroupId(null);
     }
@@ -112,28 +115,29 @@ export default function StudyGroupsPage() {
       onFilterChange={setActiveFilter}
       tone="study"
       actions={
-        <Button variant="study" onClick={() => { setFeedback(""); setDialogOpen(true); }}>
+        <Button variant="study" onClick={() => { setFeedback(null); setDialogOpen(true); }}>
             <Plus className="mr-2 h-4 w-4" />
             Create Group
         </Button>
       }
     >
       <div className="space-y-4">
-        {feedback && !dialogOpen ? <p className="rounded-xl bg-study/10 px-4 py-3 text-sm font-semibold text-study">{feedback}</p> : null}
+        {feedback && !dialogOpen ? <FeedbackBanner message={feedback.message} tone={feedback.tone} /> : null}
         <p className="inline-flex items-center gap-2 text-sm font-extrabold text-ink-soft">
           <BookOpen className="h-4 w-4 text-study" />
           Open groups with seats right now
         </p>
         <h2 className="font-display text-2xl font-semibold text-ink">Featured Study Sessions</h2>
-        {loading ? <p className="text-sm font-semibold text-ink-soft">Loading groups...</p> : null}
-        {!loading && filteredGroups.length === 0 ? (
-          <p className="text-sm font-semibold text-ink-soft">No study groups match this view.</p>
+        {loading ? <LoadingState label="Loading study groups..." rows={2} /> : null}
+        {!loading && loadError ? <ErrorState message={loadError} onRetry={() => void loadGroups()} retrying={loading} /> : null}
+        {!loading && !loadError && filteredGroups.length === 0 ? (
+          <EmptyState title="No matching study groups" message="Try another course or create a new group." />
         ) : null}
-        <div className="space-y-4">
+        {!loading && !loadError ? <div className="space-y-4">
           {filteredGroups.map((group) => (
             <StudyCard key={group.id} group={group} actionPending={pendingGroupId === group.id} onJoin={joinGroup} />
           ))}
-        </div>
+        </div> : null}
       </div>
       <Dialog
         open={dialogOpen}
@@ -164,7 +168,7 @@ export default function StudyGroupsPage() {
           <label className="block text-sm font-semibold text-ink">Focus
             <textarea required minLength={4} maxLength={240} placeholder="Topics and goals for this session" className="mt-1 min-h-24 w-full rounded-xl border border-stroke px-3 py-2" value={form.focus} onChange={(e) => setForm({ ...form, focus: e.target.value })} />
           </label>
-          {feedback ? <p className="text-sm font-semibold text-study">{feedback}</p> : null}
+          {feedback ? <FeedbackBanner message={feedback.message} tone={feedback.tone} /> : null}
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="secondary" onClick={() => setDialogOpen(false)}>Cancel</Button>
             <Button type="submit" variant="study" disabled={submitting}>{submitting ? "Publishing..." : "Publish Group"}</Button>

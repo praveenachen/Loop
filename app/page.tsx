@@ -2,14 +2,28 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { BookOpen, Car, MessageCircle, ShoppingBag, Sparkles } from "lucide-react";
 
 import { GooseImage } from "@/components/brand/goose-image";
 import { LoopPageFrame } from "@/components/shared/loop-page-frame";
 import { Button } from "@/components/ui/button";
-import { chats } from "@/data/mock";
-import { User } from "@/types";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/async-state";
+import { ChatPreview, User } from "@/types";
+
+interface DashboardActivity {
+  id: string;
+  label: "Marketplace" | "Ride" | "Study";
+  title: string;
+  detail: string;
+  href: string;
+}
+
+interface DashboardResponse {
+  user: User;
+  recentActivity: DashboardActivity[];
+  chats: ChatPreview[];
+}
 
 const quickActions = [
   {
@@ -41,17 +55,32 @@ const quickActions = [
 export default function HomePage() {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [dashboardLoading, setDashboardLoading] = useState(true);
+  const [dashboardError, setDashboardError] = useState("");
+  const [recentActivity, setRecentActivity] = useState<DashboardActivity[]>([]);
+  const [chats, setChats] = useState<ChatPreview[]>([]);
   const [activeTab, setActiveTab] = useState("Overview");
 
-  useEffect(() => {
-    async function loadUser() {
-      const res = await fetch("/api/users/me", { cache: "no-store" });
-      if (!res.ok) return;
-      const data = (await res.json()) as User;
-      setCurrentUser(data);
+  const loadDashboard = useCallback(async () => {
+    setDashboardLoading(true);
+    setDashboardError("");
+    try {
+      const response = await fetch("/api/dashboard", { cache: "no-store" });
+      if (!response.ok) throw new Error("Failed to load dashboard");
+      const data = (await response.json()) as DashboardResponse;
+      setCurrentUser(data.user);
+      setRecentActivity(data.recentActivity);
+      setChats(data.chats);
+    } catch {
+      setDashboardError("Your dashboard could not be loaded. Check your connection and try again.");
+    } finally {
+      setDashboardLoading(false);
     }
-    void loadUser();
   }, []);
+
+  useEffect(() => {
+    void loadDashboard();
+  }, [loadDashboard]);
 
   return (
     <LoopPageFrame
@@ -59,13 +88,13 @@ export default function HomePage() {
       subtitle="Loop keeps your student life organized across rides, marketplace pickups, and study plans in one verified campus network."
       mascotSrc="/geese/goose-backpack.png"
       mascotAlt="Backpack goose mascot"
-      tabs={["Overview", "Recent Activity", "Safety + Trust"]}
+      tabs={["Overview", "Recent Activity", "Messages"]}
       activeTab={activeTab}
       onTabChange={setActiveTab}
       tone="neutral"
       actions={
         <>
-          <Button variant="secondary" onClick={() => setActiveTab("Safety + Trust")}>Check Safety Center</Button>
+          <Button variant="secondary" onClick={() => setActiveTab("Messages")}>Open Messages</Button>
           <Button onClick={() => router.push("/marketplace")}>Post Something</Button>
         </>
       }
@@ -94,21 +123,23 @@ export default function HomePage() {
           })}
         </div> : null}
 
-        {activeTab !== "Safety + Trust" ? <><h2 className="font-display text-3xl font-semibold text-ink">Recent Activity</h2>
+        {dashboardLoading ? <LoadingState label="Loading recent activity..." rows={2} /> : null}
+        {!dashboardLoading && dashboardError ? <ErrorState message={dashboardError} onRetry={() => void loadDashboard()} retrying={dashboardLoading} /> : null}
+        {!dashboardLoading && !dashboardError ? <>
+
+        {activeTab !== "Messages" ? <><h2 className="font-display text-3xl font-semibold text-ink">Recent Activity</h2>
         <div className="grid gap-4 xl:grid-cols-3">
-          {[
-            "RIDE - Waterloo to Mississauga",
-            "MARKETPLACE - Aeron pickup today",
-            "STUDY - CS 341 review sprint"
-          ].map((item, index) => (
-            <article key={item} className="rounded-2xl border border-stroke bg-surface-soft p-4">
-              <p className="text-lg font-extrabold text-ink">{item}</p>
-              <p className="mt-1 text-sm text-ink-soft">Ongoing and coordinated in Loop messages.</p>
-              <Button className="mt-3" size="sm" variant={index === 0 ? "rides" : "secondary"}>
-                Keep going
+          {recentActivity.map((item) => (
+            <article key={`${item.label}-${item.id}`} className="rounded-2xl border border-stroke bg-surface-soft p-4">
+              <p className="text-xs font-extrabold uppercase text-ink-soft">{item.label}</p>
+              <p className="mt-1 text-lg font-extrabold text-ink">{item.title}</p>
+              <p className="mt-1 text-sm text-ink-soft">{item.detail}</p>
+              <Button className="mt-3" size="sm" variant={item.label === "Ride" ? "rides" : "secondary"} onClick={() => router.push(item.href)}>
+                View
               </Button>
             </article>
           ))}
+          {recentActivity.length === 0 ? <EmptyState title="No recent activity" message="Create a listing, ride, or study group to get started." /> : null}
         </div></> : null}
 
         {activeTab !== "Recent Activity" ? <div className="rounded-2xl border border-stroke bg-white p-4">
@@ -117,8 +148,8 @@ export default function HomePage() {
             Message pulse
           </p>
           <div className="grid gap-3 lg:grid-cols-3">
-            {chats.map((chat) => (
-              <div key={chat.id} className="rounded-xl border border-stroke bg-surface-soft p-3">
+            {chats.slice(0, 3).map((chat) => (
+              <Link key={chat.id} href={`/messages?conversation=${encodeURIComponent(chat.id)}`} className="rounded-xl border border-stroke bg-surface-soft p-3 transition hover:border-accent/40">
                 <p className="font-extrabold text-ink">{chat.with.name}</p>
                 <p className="text-xs text-ink-soft">{chat.context}</p>
                 <p className="mt-2 text-sm text-ink-soft">{chat.lastMessage}</p>
@@ -126,10 +157,12 @@ export default function HomePage() {
                   <MessageCircle className="h-3.5 w-3.5" />
                   {chat.unread > 0 ? `${chat.unread} unread` : "All caught up"}
                 </p>
-              </div>
+              </Link>
             ))}
+            {chats.length === 0 ? <EmptyState title="No conversations yet" message="Contact a marketplace seller to start one." /> : null}
           </div>
         </div> : null}
+        </> : null}
       </div>
     </LoopPageFrame>
   );

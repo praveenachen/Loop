@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { LoopPageFrame } from "@/components/shared/loop-page-frame";
 import { ListingCard } from "@/components/shared/listing-card";
 import { Button } from "@/components/ui/button";
+import { EmptyState, ErrorState, FeedbackBanner, LoadingState } from "@/components/ui/async-state";
 import { Dialog } from "@/components/ui/dialog";
 import { RatingChip } from "@/components/ui/rating-chip";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -17,30 +18,32 @@ export default function MarketplacePage() {
   const router = useRouter();
   const [marketplaceListings, setMarketplaceListings] = useState<MarketplaceListing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [activeTab, setActiveTab] = useState("Browse");
   const [activeFilter, setActiveFilter] = useState("All categories");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [feedback, setFeedback] = useState("");
+  const [feedback, setFeedback] = useState<{ message: string; tone: "success" | "error" } | null>(null);
   const [pendingListingId, setPendingListingId] = useState<string | null>(null);
   const [form, setForm] = useState({ title: "", description: "", price: 0, location: "", category: "" });
 
   const loadListings = useCallback(async () => {
-    const res = await fetch("/api/marketplace/listings", { cache: "no-store" });
-    if (!res.ok) throw new Error("Failed to load marketplace listings");
-    const data = (await res.json()) as MarketplaceListing[];
-    setMarketplaceListings(data);
+    setLoading(true);
+    setLoadError("");
+    try {
+      const res = await fetch("/api/marketplace/listings", { cache: "no-store" });
+      if (!res.ok) throw new Error("Failed to load marketplace listings");
+      const data = (await res.json()) as MarketplaceListing[];
+      setMarketplaceListings(data);
+    } catch {
+      setLoadError("Marketplace listings could not be loaded. Check your connection and try again.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    async function load() {
-      try {
-        await loadListings();
-      } finally {
-        setLoading(false);
-      }
-    }
-    void load();
+    void loadListings();
   }, [loadListings]);
 
   const filteredListings = useMemo(() => {
@@ -55,7 +58,7 @@ export default function MarketplacePage() {
   async function createListing(event: FormEvent) {
     event.preventDefault();
     setSubmitting(true);
-    setFeedback("");
+    setFeedback(null);
 
     try {
       const res = await fetch("/api/marketplace/listings", {
@@ -65,16 +68,16 @@ export default function MarketplacePage() {
       });
       const payload = (await res.json()) as { error?: string };
       if (!res.ok) {
-        setFeedback(payload.error ?? "Could not create the listing.");
+        setFeedback({ message: payload.error ?? "Could not create the listing.", tone: "error" });
         return;
       }
 
       await loadListings();
       setForm({ title: "", description: "", price: 0, location: "", category: "" });
       setDialogOpen(false);
-      setFeedback("Listing published successfully.");
+      setFeedback({ message: "Listing published successfully.", tone: "success" });
     } catch {
-      setFeedback("Could not reach the server. Please try again.");
+      setFeedback({ message: "Could not reach the server. Please try again.", tone: "error" });
     } finally {
       setSubmitting(false);
     }
@@ -82,21 +85,21 @@ export default function MarketplacePage() {
 
   async function contactSeller(listing: MarketplaceListing) {
     setPendingListingId(listing.id);
-    setFeedback("");
+    setFeedback(null);
     try {
       const res = await fetch(`/api/marketplace/listings/${listing.id}/contact`, { method: "POST" });
       const payload = (await res.json()) as { conversationId?: string; error?: string };
       if (!res.ok) {
-        setFeedback(payload.error ?? "Could not start the conversation.");
+        setFeedback({ message: payload.error ?? "Could not start the conversation.", tone: "error" });
         return;
       }
       if (!payload.conversationId) {
-        setFeedback("The conversation was created but could not be opened.");
+        setFeedback({ message: "The conversation was created but could not be opened.", tone: "error" });
         return;
       }
       router.push(`/messages?conversation=${encodeURIComponent(payload.conversationId)}`);
     } catch {
-      setFeedback("Could not reach the server. Please try again.");
+      setFeedback({ message: "Could not reach the server. Please try again.", tone: "error" });
     } finally {
       setPendingListingId(null);
     }
@@ -119,14 +122,14 @@ export default function MarketplacePage() {
       onFilterChange={setActiveFilter}
       tone="marketplace"
       actions={
-        <Button variant="marketplace" onClick={() => { setFeedback(""); setDialogOpen(true); }}>
+        <Button variant="marketplace" onClick={() => { setFeedback(null); setDialogOpen(true); }}>
             <Plus className="mr-2 h-4 w-4" />
             Create Listing
         </Button>
       }
     >
       <div className="space-y-4">
-        {feedback && !dialogOpen ? <p className="rounded-xl bg-marketplace/10 px-4 py-3 text-sm font-semibold text-marketplace">{feedback}</p> : null}
+        {feedback && !dialogOpen ? <FeedbackBanner message={feedback.message} tone={feedback.tone} /> : null}
         <div className="flex flex-wrap items-center gap-2">
           <span className="loop-pill bg-marketplace/10 text-marketplace">
             <Tag className="h-4 w-4" />
@@ -138,11 +141,12 @@ export default function MarketplacePage() {
           </span>
         </div>
         <h2 className="font-display text-2xl font-semibold text-ink">Latest Campus Listings</h2>
-        {loading ? <p className="text-sm font-semibold text-ink-soft">Loading listings...</p> : null}
-        {!loading && filteredListings.length === 0 ? (
-          <p className="text-sm font-semibold text-ink-soft">No listings match this view.</p>
+        {loading ? <LoadingState label="Loading marketplace listings..." rows={2} /> : null}
+        {!loading && loadError ? <ErrorState message={loadError} onRetry={() => void loadListings()} retrying={loading} /> : null}
+        {!loading && !loadError && filteredListings.length === 0 ? (
+          <EmptyState title="No matching listings" message="Try another category or publish a new listing." />
         ) : null}
-        <div className="grid gap-4 xl:grid-cols-2">
+        {!loading && !loadError ? <div className="grid gap-4 xl:grid-cols-2">
           {filteredListings.map((item) => (
             <ListingCard
               key={item.id}
@@ -177,7 +181,7 @@ export default function MarketplacePage() {
               }
             />
           ))}
-        </div>
+        </div> : null}
       </div>
       <Dialog
         open={dialogOpen}
@@ -203,7 +207,7 @@ export default function MarketplacePage() {
           <label className="block text-sm font-semibold text-ink">Pickup location
             <input required minLength={2} maxLength={120} placeholder="SLC" className="mt-1 w-full rounded-xl border border-stroke px-3 py-2" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
           </label>
-          {feedback ? <p className="text-sm font-semibold text-study">{feedback}</p> : null}
+          {feedback ? <FeedbackBanner message={feedback.message} tone={feedback.tone} /> : null}
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="secondary" onClick={() => setDialogOpen(false)}>Cancel</Button>
             <Button type="submit" variant="marketplace" disabled={submitting}>{submitting ? "Publishing..." : "Publish Listing"}</Button>
