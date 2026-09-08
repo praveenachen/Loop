@@ -17,9 +17,7 @@ const navItems = [
   { href: "/rides", label: "Rides" },
   { href: "/study-groups", label: "Study Groups" },
   { href: "/messages", label: "Messages" },
-  { href: "/profile", label: "Profile" },
-  { href: "/beta-lab", label: "Beta Lab" },
-  { href: "/beta-admin", label: "Beta Admin" }
+  { href: "/profile", label: "Profile" }
 ];
 
 interface AppShellProps {
