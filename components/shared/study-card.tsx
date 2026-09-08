@@ -8,9 +8,21 @@ import { ListingCard } from "./listing-card";
 
 interface StudyCardProps {
   group: StudyGroup;
+  actionPending?: boolean;
+  onJoin?: (group: StudyGroup) => void;
 }
 
-export function StudyCard({ group }: StudyCardProps) {
+export function StudyCard({ group, actionPending = false, onJoin }: StudyCardProps) {
+  const actionLabel = group.isOwner
+    ? "Your Group"
+    : group.joinedByCurrentUser
+      ? "Joined"
+      : group.seatsLeft <= 0
+        ? "Group Full"
+        : actionPending
+          ? "Joining..."
+          : "Join Group";
+
   return (
     <ListingCard
       accent="study"
@@ -36,8 +48,13 @@ export function StudyCard({ group }: StudyCardProps) {
               </span>
             </div>
           </div>
-          <Button variant="study" size="sm">
-            Join Group
+          <Button
+            variant="study"
+            size="sm"
+            disabled={group.isOwner || group.joinedByCurrentUser || group.seatsLeft <= 0 || actionPending}
+            onClick={() => onJoin?.(group)}
+          >
+            {actionLabel}
           </Button>
         </>
       }

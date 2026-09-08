@@ -61,6 +61,8 @@ model User {
   conversationLinks     ConversationParticipant[]
   authoredReviews       Review[]           @relation("ReviewAuthor")
   receivedReviews       Review[]           @relation("ReviewSubject")
+  rideSeatRequests      RideSeatRequest[]
+  studyGroupMemberships StudyGroupMember[]
 }
 
 model MarketplaceListing {
@@ -97,6 +99,7 @@ model RideListing {
   updatedAt    DateTime       @updatedAt
 
   driver User @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  seatRequests RideSeatRequest[]
 
   @@index([driverId])
   @@index([seatStatus])
@@ -116,9 +119,36 @@ model StudyGroup {
   updatedAt DateTime @updatedAt
 
   host User @relation("StudyGroupHost", fields: [hostId], references: [id], onDelete: Cascade)
+  members StudyGroupMember[]
 
   @@index([hostId])
   @@index([course])
+}
+
+model RideSeatRequest {
+  id        String   @id @default(cuid())
+  rideId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  ride RideListing @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([rideId, userId])
+  @@index([userId])
+}
+
+model StudyGroupMember {
+  id        String   @id @default(cuid())
+  groupId   String
+  userId    String
+  joinedAt  DateTime @default(now())
+
+  group StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@index([userId])
 }
 
 model Conversation {

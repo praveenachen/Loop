@@ -28,7 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${bodyFont.variable} ${displayFont.variable}`}>
+      <body suppressHydrationWarning className={`${bodyFont.variable} ${displayFont.variable}`}>
         <AppShell>{children}</AppShell>
       </body>
     </html>

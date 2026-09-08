@@ -13,7 +13,11 @@ export async function GET() {
   const rides = await db.rideListing.findMany({
     orderBy: { createdAt: "desc" },
     include: {
-      driver: true
+      driver: true,
+      seatRequests: {
+        where: { userId: user.id },
+        select: { id: true }
+      }
     }
   });
 
@@ -27,6 +31,8 @@ export async function GET() {
       seatStatus: ride.seatStatus === RideSeatStatus.SEATS_OPEN ? "seats-open" : "waitlist",
       car: ride.car,
       mode: ride.mode.toLowerCase(),
+      requestedByCurrentUser: ride.seatRequests.length > 0,
+      isOwner: ride.driverId === user.id,
       driver: {
         id: ride.driver.id,
         name: ride.driver.name,

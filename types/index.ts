@@ -30,6 +30,8 @@ export interface MarketplaceListing {
   category: string;
   status: ListingStatus;
   seller: User;
+  contactedByCurrentUser?: boolean;
+  isOwner?: boolean;
 }
 
 export interface RideListing {
@@ -42,6 +44,8 @@ export interface RideListing {
   seatStatus: RideSeatStatus;
   car: string;
   mode?: "offer" | "request";
+  requestedByCurrentUser?: boolean;
+  isOwner?: boolean;
 }
 
 export interface StudyGroup {
@@ -53,6 +57,8 @@ export interface StudyGroup {
   seatsLeft: number;
   host: User;
   focus: string;
+  joinedByCurrentUser?: boolean;
+  isOwner?: boolean;
 }
 
 export interface ChatPreview {

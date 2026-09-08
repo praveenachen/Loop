@@ -12,7 +12,11 @@ export async function GET() {
   const groups = await db.studyGroup.findMany({
     orderBy: { createdAt: "desc" },
     include: {
-      host: true
+      host: true,
+      members: {
+        where: { userId: user.id },
+        select: { id: true }
+      }
     }
   });
 
@@ -25,6 +29,8 @@ export async function GET() {
       location: group.location,
       seatsLeft: group.seatsLeft,
       focus: group.focus,
+      joinedByCurrentUser: group.members.length > 0,
+      isOwner: group.hostId === user.id,
       host: {
         id: group.host.id,
         name: group.host.name,

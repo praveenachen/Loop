@@ -17,6 +17,16 @@ export async function GET() {
     }
   });
 
+  const contacted = await db.conversation.findMany({
+    where: {
+      contextType: "MARKETPLACE",
+      contextId: { in: listings.map((item) => item.id) },
+      participants: { some: { userId: user.id } }
+    },
+    select: { contextId: true }
+  });
+  const contactedIds = new Set(contacted.map((conversation) => conversation.contextId));
+
   return NextResponse.json(
     listings.map((item) => ({
       id: item.id,
@@ -27,6 +37,8 @@ export async function GET() {
       location: item.location,
       category: item.category,
       status: item.status.toLowerCase(),
+      contactedByCurrentUser: contactedIds.has(item.id),
+      isOwner: item.sellerId === user.id,
       seller: {
         id: item.seller.id,
         name: item.seller.name,
