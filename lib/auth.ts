@@ -14,6 +14,24 @@ function isWaterlooEmail(email: string) {
   return email.toLowerCase().endsWith("@uwaterloo.ca");
 }
 
+export async function authenticateCredentials(rawCredentials: unknown) {
+  const parsed = credentialsSchema.safeParse(rawCredentials);
+  if (!parsed.success) return null;
+
+  const email = parsed.data.email.toLowerCase();
+  if (!isWaterlooEmail(email)) return null;
+
+  const user = await db.user.findUnique({
+    where: { email }
+  });
+  if (!user?.passwordHash) return null;
+
+  const valid = await compare(parsed.data.password, user.passwordHash);
+  if (!valid) return null;
+
+  return user;
+}
+
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt"
@@ -26,19 +44,8 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(rawCredentials) {
-        const parsed = credentialsSchema.safeParse(rawCredentials);
-        if (!parsed.success) return null;
-
-        const email = parsed.data.email.toLowerCase();
-        if (!isWaterlooEmail(email)) return null;
-
-        const user = await db.user.findUnique({
-          where: { email }
-        });
-        if (!user?.passwordHash) return null;
-
-        const valid = await compare(parsed.data.password, user.passwordHash);
-        if (!valid) return null;
+        const user = await authenticateCredentials(rawCredentials);
+        if (!user) return null;
 
         return {
           id: user.id,

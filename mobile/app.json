@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "Loop",
+    "slug": "loop-mobile",
+    "scheme": "loop",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "predictiveBackGestureEnabled": true,
+      "softwareKeyboardLayoutMode": "resize"
+    },
+    "plugins": ["expo-router", "expo-font", "expo-secure-store"],
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    }
+  }
+}

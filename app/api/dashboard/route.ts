@@ -19,9 +19,9 @@ export async function GET() {
   if (!user) return unauthorized();
 
   const [listing, ride, group, conversationLinks] = await Promise.all([
-    db.marketplaceListing.findFirst({ orderBy: { createdAt: "desc" } }),
-    db.rideListing.findFirst({ orderBy: { createdAt: "desc" } }),
-    db.studyGroup.findFirst({ orderBy: { createdAt: "desc" } }),
+    db.marketplaceListing.findFirst({ where: { sellerId: user.id }, orderBy: { createdAt: "desc" } }),
+    db.rideListing.findFirst({ where: { OR: [{ driverId: user.id }, { seatRequests: { some: { userId: user.id } } }] }, orderBy: { createdAt: "desc" } }),
+    db.studyGroup.findFirst({ where: { OR: [{ hostId: user.id }, { members: { some: { userId: user.id } } }] }, orderBy: { createdAt: "desc" } }),
     db.conversationParticipant.findMany({
       where: { userId: user.id },
       orderBy: { joinedAt: "desc" },

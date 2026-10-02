@@ -54,6 +54,10 @@ export async function GET() {
 
       return {
         id: link.conversation.id,
+        entityId: link.conversation.contextId,
+        vertical: link.conversation.contextType === "RIDE" ? "rides" : link.conversation.contextType === "STUDY_GROUP" ? "study" : "marketplace",
+        detail: "",
+        messages: [],
         with: {
           id: other.id,
           name: other.name,
