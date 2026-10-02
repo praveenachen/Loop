@@ -6,6 +6,7 @@ const assets = {
   trophy: require("../assets/geese/goose-trophy.png"),
   logoTransparent: require("../assets/geese/logo-goose-transparent.png"),
   logo: require("../assets/geese/logo-goose.png"),
+  logoSolid: require("../assets/geese/logo-goose-solid.png"),
 };
 export type Goose = keyof typeof assets;
 export function GooseImage({

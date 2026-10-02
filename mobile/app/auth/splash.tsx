@@ -3,7 +3,7 @@ import { Animated, Easing, View } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { GooseImage, LoopButton, LoopText, RainbowBackground } from "../../components";
-import { colors, radius, shadows } from "../../theme";
+import { colors } from "../../theme";
 export default function SplashScreen() {
   const pop = useRef(new Animated.Value(0)).current;
   const bob = useRef(new Animated.Value(0)).current;
@@ -27,24 +27,15 @@ export default function SplashScreen() {
       <RainbowBackground vivid />
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 20, padding: 24 }}>
         <Animated.View
-          style={[
-            shadows.lift,
-            {
-              width: 190,
-              height: 190,
-              borderRadius: radius.pill,
-              backgroundColor: colors.white,
-              alignItems: "center",
-              justifyContent: "center",
-              opacity: pop,
-              transform: [
-                { scale: pop.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] }) },
-                { translateY: bob.interpolate({ inputRange: [0, 1], outputRange: [0, -10] }) },
-              ],
-            },
-          ]}
+          style={{
+            opacity: pop,
+            transform: [
+              { scale: pop.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] }) },
+              { translateY: bob.interpolate({ inputRange: [0, 1], outputRange: [0, -10] }) },
+            ],
+          }}
         >
-          <GooseImage goose="logo" size={150} decorative />
+          <GooseImage goose="logoSolid" size={320} decorative />
         </Animated.View>
         <Animated.View
           style={{
