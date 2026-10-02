@@ -34,3 +34,4 @@ export * from "./TabTopBar";
 export * from "./SectionDropdown";
 export * from "./CompactCard";
 export * from "./PriceText";
+export * from "./PressableScale";

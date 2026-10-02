@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
-import { Pressable, type PressableProps } from "react-native";
+import type { PressableProps, StyleProp, ViewStyle } from "react-native";
 import { colors, radius, spacing, typography } from "../theme";
 import { LoopText } from "./LoopText";
+import { PressableScale } from "./PressableScale";
 type Variant = "primary" | "secondary" | "marketplace" | "rides" | "study";
 export function LoopButton({
   children,
@@ -11,7 +12,8 @@ export function LoopButton({
   compact = false,
   style,
   ...props
-}: Omit<PressableProps, "children"> & {
+}: Omit<PressableProps, "children" | "style"> & {
+  style?: StyleProp<ViewStyle>;
   children: string;
   variant?: Variant;
   icon?: ReactNode;
@@ -26,12 +28,12 @@ export function LoopButton({
   const color =
     variant === "secondary" || variant === "rides" ? colors.ink : colors.white;
   return (
-    <Pressable
+    <PressableScale
       {...props}
       disabled={disabled}
       accessibilityRole="button"
       accessibilityState={{ disabled: !!disabled }}
-      style={(state) => [
+      style={[
         {
           minHeight: compact ? 34 : 44,
           ...(compact ? { height: 34 } : null),
@@ -46,10 +48,9 @@ export function LoopButton({
           gap: 8,
           alignItems: "center",
           justifyContent: "center",
-          opacity: disabled ? 0.5 : state.pressed ? 0.75 : 1,
-          transform: [{ scale: state.pressed && !disabled ? 0.98 : 1 }],
+          opacity: disabled ? 0.5 : 1,
         },
-        typeof style === "function" ? style(state) : style,
+        style,
       ]}
     >
       {icon}
@@ -63,6 +64,6 @@ export function LoopButton({
       >
         {children}
       </LoopText>
-    </Pressable>
+    </PressableScale>
   );
 }

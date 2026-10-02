@@ -1,6 +1,6 @@
 import { useAction } from "../lib/useAction";
 import { FeedbackBanner } from "./AsyncState";
-import { Pressable, View } from "react-native";
+import { View } from "react-native";
 import { router } from "expo-router";
 import { Car, Users } from "lucide-react-native";
 import type { RideListing } from "../lib/types";
@@ -8,6 +8,7 @@ import { useLoop } from "../lib/AppProvider";
 import { colors } from "../theme";
 import { LoopCard } from "./LoopCard";
 import { LoopText } from "./LoopText";
+import { PressableScale } from "./PressableScale";
 import { LoopButton } from "./LoopButton";
 import { StatusBadge } from "./StatusBadge";
 import { CardFooter, TrustRow, MetaLine } from "./CardParts";
@@ -39,14 +40,13 @@ export function RideCard({
         tone="rides"
         left={
           <>
-            <Pressable
+            <PressableScale
               accessibilityRole="button"
               accessibilityLabel={`Open ride: ${ride.route}`}
               onPress={() => router.push(`/ride/${ride.id}`)}
-              style={({ pressed }) => ({ opacity: pressed ? 0.72 : 1 })}
             >
               <LoopText variant="cardTitle" numberOfLines={1}>{ride.route}</LoopText>
-            </Pressable>
+            </PressableScale>
             <LoopText variant="meta" numberOfLines={1}>
               {ride.departure}
             </LoopText>
@@ -69,7 +69,7 @@ export function RideCard({
                 ride.requestedByCurrentUser ||
                 unavailable
               }
-              onPress={() => { void action.run(() => mutate(`/api/rides/${ride.id}/request-seat`), "Seat requested successfully."); }}
+              onPress={() => { void action.run(() => mutate(`/api/rides/${ride.id}/request-seat`), "Seat requested successfully.", true); }}
             >
               {label}
             </LoopButton>
@@ -88,19 +88,16 @@ export function RideCard({
       {detail ? (
         <LoopText variant="cardHeading">{ride.route}</LoopText>
       ) : (
-        <Pressable
+        <PressableScale
           accessibilityRole="button"
           accessibilityLabel={`Open ride: ${ride.route}`}
           onPress={() => router.push(`/ride/${ride.id}`)}
-          style={({ pressed }) => ({
+          style={{
             minHeight: 44,
-            justifyContent: "center",
-            opacity: pressed ? 0.72 : 1,
-            transform: [{ scale: pressed ? 0.99 : 1 }],
-          })}
+            justifyContent: "center" }}
         >
           <LoopText variant="cardHeading" numberOfLines={2}>{ride.route}</LoopText>
-        </Pressable>
+        </PressableScale>
       )}
       <StatusBadge status={ride.seatStatus} />
       <LoopText variant="smallBody" numberOfLines={2}>
@@ -125,7 +122,7 @@ export function RideCard({
             ride.requestedByCurrentUser ||
             unavailable
           }
-          onPress={() => { void action.run(() => mutate(`/api/rides/${ride.id}/request-seat`), "Seat requested successfully."); }}
+          onPress={() => { void action.run(() => mutate(`/api/rides/${ride.id}/request-seat`), "Seat requested successfully.", true); }}
         >
           {label}
         </LoopButton>

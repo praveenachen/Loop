@@ -8,6 +8,7 @@ import { LoopText } from "./LoopText";
 import { LoopInput } from "./LoopInput";
 import { LoopButton } from "./LoopButton";
 import { FeedbackBanner } from "./AsyncState";
+import { hapticSuccess } from "../lib/haptics";
 export function dismissTo(path: string) {
   if (router.canGoBack()) router.back();
   else router.replace(path);
@@ -46,7 +47,7 @@ export function LoopForm({
     lock.current = true; setSubmitting(true);
     try { await onSubmit(
       Object.fromEntries(Object.entries(values).map(([k, v]) => [k, v.trim()])),
-    ); } catch (e) { setError((e as Error).message); } finally { lock.current = false; setSubmitting(false); }
+    ); hapticSuccess(); } catch (e) { setError((e as Error).message); } finally { lock.current = false; setSubmitting(false); }
   }
   return (
     <FormScreen>

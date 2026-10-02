@@ -9,6 +9,7 @@ import {
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GooseImage } from "../../components/GooseImage";
+import { PressableScale } from "../../components/PressableScale";
 import { colors, fonts, radius } from "../../theme";
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
@@ -27,6 +28,19 @@ export default function TabLayout() {
         },
         tabBarLabelStyle: { fontFamily: fonts.bold, fontSize: 10 },
         tabBarItemStyle: { minHeight: 44 },
+        tabBarButton: (props) => (
+          <PressableScale
+            onPress={props.onPress}
+            onLongPress={props.onLongPress}
+            accessibilityRole={props.accessibilityRole}
+            accessibilityState={props.accessibilityState}
+            accessibilityLabel={props.accessibilityLabel}
+            testID={props.testID}
+            style={props.style}
+          >
+            {props.children}
+          </PressableScale>
+        ),
       }}
     >
       <Tabs.Screen

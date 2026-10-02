@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Pressable, View } from "react-native";
+import { View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { ArrowRight } from "lucide-react-native";
 import {
@@ -12,6 +12,7 @@ import {
 } from "../theme";
 import { GooseImage, type Goose } from "./GooseImage";
 import { LoopText } from "./LoopText";
+import { PressableScale } from "./PressableScale";
 export function ActionCard({
   title,
   description,
@@ -33,18 +34,16 @@ export function ActionCard({
 }) {
   if (compact) {
     return (
-      <Pressable
+      <PressableScale
         onPress={onPress}
         accessibilityRole="button"
         accessibilityLabel={`${title} ${description}`}
-        style={({ pressed }) => [
+        style={[
           shadows.card,
           {
             flex: 1,
             borderRadius: radius.card,
             backgroundColor: colors.white,
-            opacity: pressed ? 0.8 : 1,
-            transform: [{ scale: pressed ? 0.97 : 1 }],
           },
         ]}
       >
@@ -81,23 +80,21 @@ export function ActionCard({
             {title}
           </LoopText>
         </LinearGradient>
-      </Pressable>
+      </PressableScale>
     );
   }
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={title}
-      style={({ pressed }) => [
+      style={[
         shadows.card,
         {
           borderRadius: goose ? radius.feature : radius.card,
           backgroundColor: colors.white,
-          opacity: pressed ? 0.8 : 1,
-          transform: [{ scale: pressed ? 0.985 : 1 }],
         },
-      ]}
+        ]}
     >
       <LinearGradient
         colors={
@@ -168,6 +165,6 @@ export function ActionCard({
           </View>
         ) : null}
       </LinearGradient>
-    </Pressable>
+    </PressableScale>
   );
 }

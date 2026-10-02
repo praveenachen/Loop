@@ -1,5 +1,6 @@
 import { Search, X } from "lucide-react-native";
-import { Pressable, TextInput, View } from "react-native";
+import { TextInput, View } from "react-native";
+import { PressableScale } from "./PressableScale";
 
 import { colors, fonts, radius } from "../theme";
 
@@ -48,18 +49,15 @@ export function LoopSearchBar({
         }}
       />
       {value ? (
-        <Pressable
+        <PressableScale
           onPress={() => onChange("")}
           accessibilityRole="button"
           accessibilityLabel="Clear search"
           hitSlop={10}
-          style={({ pressed }) => ({
-            opacity: pressed ? 0.65 : 1,
-            transform: [{ scale: pressed ? 0.92 : 1 }],
-          })}
+          scaleTo={0.92}
         >
           <X size={18} color={colors.inkSoft} />
-        </Pressable>
+        </PressableScale>
       ) : null}
     </View>
   );

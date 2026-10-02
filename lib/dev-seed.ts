@@ -1,5 +1,6 @@
 import { hash } from "bcryptjs";
 import {
+  ConversationContextType,
   MarketplaceStatus,
   PrismaClient,
   RideMode,
@@ -7,404 +8,244 @@ import {
   VerificationLevel
 } from "@prisma/client";
 
+// Deterministic demo dataset. No randomness: every row, order, price and timestamp offset is fixed,
+// so each reset produces the same app state. Primary demo account: avery@uwaterloo.ca.
+// Timestamps are offsets from "now" so relative times ("35m", "3h") read naturally right after a reset.
+export const DEMO_PASSWORD = "LoopPass123!";
+
+const ago = (minutes: number) => new Date(Date.now() - minutes * 60_000);
+
 export async function resetAndSeed(prisma: PrismaClient) {
   await prisma.message.deleteMany();
   await prisma.conversationParticipant.deleteMany();
   await prisma.conversation.deleteMany();
   await prisma.review.deleteMany();
+  await prisma.rideSeatRequest.deleteMany();
+  await prisma.studyGroupMember.deleteMany();
   await prisma.marketplaceListing.deleteMany();
   await prisma.rideListing.deleteMany();
   await prisma.studyGroup.deleteMany();
   await prisma.user.deleteMany();
 
-  const passwordHash = await hash("LoopPass123!", 12);
+  const passwordHash = await hash(DEMO_PASSWORD, 12);
+  const verifiedAt = ago(60 * 24 * 90);
 
-  const [avery, noah, maya, liam, sana, ethan, betaOne, betaTwo] = await Promise.all([
+  const person = (
+    email: string,
+    name: string,
+    program: string,
+    year: string,
+    rating: number,
+    reviewsCount: number,
+    verificationLevel: VerificationLevel,
+    completedTransactions: number,
+    ridesGiven: number,
+    groupsHosted: number
+  ) =>
     prisma.user.create({
       data: {
-        email: "avery@uwaterloo.ca",
-        name: "Avery Chen",
-        program: "Software Engineering",
-        year: "3A",
-        avatar: "AC",
-        rating: 4.9,
-        reviewsCount: 42,
-        verificationLevel: VerificationLevel.TRUSTED,
-        completedTransactions: 31,
-        ridesGiven: 18,
-        groupsHosted: 9,
+        email,
+        name,
+        program,
+        year,
+        avatar: name
+          .split(" ")
+          .map((part) => part[0])
+          .join("")
+          .slice(0, 2),
+        rating,
+        reviewsCount,
+        verificationLevel,
+        completedTransactions,
+        ridesGiven,
+        groupsHosted,
         passwordHash,
-        verifiedAt: new Date()
+        verifiedAt
       }
-    }),
-    prisma.user.create({
-      data: {
-        email: "noah@uwaterloo.ca",
-        name: "Noah Patel",
-        program: "Computer Science",
-        year: "2B",
-        avatar: "NP",
-        rating: 4.8,
-        reviewsCount: 28,
-        verificationLevel: VerificationLevel.VERIFIED,
-        completedTransactions: 21,
-        ridesGiven: 12,
-        groupsHosted: 5,
-        passwordHash,
-        verifiedAt: new Date()
-      }
-    }),
-    prisma.user.create({
-      data: {
-        email: "maya@uwaterloo.ca",
-        name: "Maya Singh",
-        program: "Biomedical Engineering",
-        year: "4A",
-        avatar: "MS",
-        rating: 5,
-        reviewsCount: 61,
-        verificationLevel: VerificationLevel.AMBASSADOR,
-        completedTransactions: 54,
-        ridesGiven: 27,
-        groupsHosted: 14,
-        passwordHash,
-        verifiedAt: new Date()
-      }
-    }),
-    prisma.user.create({
-      data: {
-        email: "liam@uwaterloo.ca",
-        name: "Liam O'Brien",
-        program: "Math",
-        year: "1B",
-        avatar: "LO",
-        rating: 4.7,
-        reviewsCount: 16,
-        verificationLevel: VerificationLevel.VERIFIED,
-        completedTransactions: 12,
-        ridesGiven: 4,
-        groupsHosted: 3,
-        passwordHash,
-        verifiedAt: new Date()
-      }
-    }),
-    prisma.user.create({
-      data: {
-        email: "sana@uwaterloo.ca",
-        name: "Sana Rahman",
-        program: "Architecture",
-        year: "2A",
-        avatar: "SR",
-        rating: 4.9,
-        reviewsCount: 33,
-        verificationLevel: VerificationLevel.TRUSTED,
-        completedTransactions: 26,
-        ridesGiven: 9,
-        groupsHosted: 7,
-        passwordHash,
-        verifiedAt: new Date()
-      }
-    }),
-    prisma.user.create({
-      data: {
-        email: "ethan@uwaterloo.ca",
-        name: "Ethan Wu",
-        program: "Mechanical Engineering",
-        year: "3B",
-        avatar: "EW",
-        rating: 4.8,
-        reviewsCount: 39,
-        verificationLevel: VerificationLevel.VERIFIED,
-        completedTransactions: 29,
-        ridesGiven: 16,
-        groupsHosted: 4,
-        passwordHash,
-        verifiedAt: new Date()
-      }
-    }),
-    prisma.user.create({
-      data: {
-        email: "beta1@uwaterloo.ca",
-        name: "Beta Tester One",
-        program: "Management Engineering",
-        year: "3A",
-        avatar: "B1",
-        rating: 4.6,
-        reviewsCount: 7,
-        verificationLevel: VerificationLevel.VERIFIED,
-        completedTransactions: 5,
-        ridesGiven: 2,
-        groupsHosted: 1,
-        passwordHash,
-        verifiedAt: new Date()
-      }
-    }),
-    prisma.user.create({
-      data: {
-        email: "beta2@uwaterloo.ca",
-        name: "Beta Tester Two",
-        program: "Civil Engineering",
-        year: "2B",
-        avatar: "B2",
-        rating: 4.7,
-        reviewsCount: 9,
-        verificationLevel: VerificationLevel.VERIFIED,
-        completedTransactions: 8,
-        ridesGiven: 3,
-        groupsHosted: 2,
-        passwordHash,
-        verifiedAt: new Date()
-      }
-    })
-  ]);
+    });
 
-  await prisma.marketplaceListing.createMany({
-    data: [
-      {
-        sellerId: maya.id,
-        title: "iClicker Reef + PHYS 121 Notes Bundle",
-        description: "Excellent condition. Includes formula cheat sheets and annotated lecture notes.",
-        price: 55,
-        postedAt: "12 mins ago",
-        location: "E7 Atrium",
-        category: "Textbooks",
-        status: MarketplaceStatus.AVAILABLE
-      },
-      {
-        sellerId: noah.id,
-        title: "Herman Miller Aeron (Size B)",
-        description: "Selling before co-op term. Fully working, no major scratches.",
-        price: 540,
-        postedAt: "1h ago",
-        location: "ICON 330",
-        category: "Furniture",
-        status: MarketplaceStatus.PENDING
-      },
-      {
-        sellerId: liam.id,
-        title: "Request: CHEM 266 Lab Coat",
-        description: "Need by Monday lab. Medium or large. Can pick up on campus today.",
-        price: 25,
-        postedAt: "2h ago",
-        location: "QNC Lobby",
-        category: "Requests",
-        status: MarketplaceStatus.AVAILABLE
-      },
-      {
-        sellerId: sana.id,
-        title: "Dell 27-inch 4K Monitor (USB-C)",
-        description: "Perfect for coding + design work. Includes stand and original box.",
-        price: 280,
-        postedAt: "3h ago",
-        location: "UWP Beck Hall",
-        category: "Electronics",
-        status: MarketplaceStatus.AVAILABLE
-      },
-      {
-        sellerId: ethan.id,
-        title: "SYDE 252 + STAT 206 Midterm Prep Bundle",
-        description: "Condensed formula sheets + solved practice sets with topic tags.",
-        price: 30,
-        postedAt: "5h ago",
-        location: "RCH Foyer",
-        category: "Textbooks",
-        status: MarketplaceStatus.AVAILABLE
-      },
-      {
-        sellerId: avery.id,
-        title: "Request: Winter Convocation Dress Shirt",
-        description: "Need a slim-fit medium shirt by Friday evening, can return dry-cleaned.",
-        price: 20,
-        postedAt: "7h ago",
-        location: "SLC Turnkey",
-        category: "Requests",
-        status: MarketplaceStatus.PENDING
-      }
-    ]
-  });
+  // Sequential (not Promise.all) so creation order is stable.
+  const avery = await person("avery@uwaterloo.ca", "Avery Chen", "Software Engineering", "3A", 4.9, 38, VerificationLevel.TRUSTED, 24, 12, 6);
+  const noah = await person("noah@uwaterloo.ca", "Noah Patel", "Computer Science", "2B", 4.8, 28, VerificationLevel.VERIFIED, 21, 12, 5);
+  const maya = await person("maya@uwaterloo.ca", "Maya Singh", "Biomedical Engineering", "4A", 4.9, 61, VerificationLevel.AMBASSADOR, 54, 27, 14);
+  const liam = await person("liam@uwaterloo.ca", "Liam O'Brien", "Mathematics", "2B", 4.7, 16, VerificationLevel.VERIFIED, 12, 4, 3);
+  const sana = await person("sana@uwaterloo.ca", "Sana Rahman", "Architecture", "2A", 4.9, 33, VerificationLevel.TRUSTED, 26, 9, 7);
+  const ethan = await person("ethan@uwaterloo.ca", "Ethan Wu", "Mechanical Engineering", "3B", 4.8, 39, VerificationLevel.VERIFIED, 29, 16, 4);
+  const priya = await person("priya@uwaterloo.ca", "Priya Nair", "Computer Engineering", "3B", 4.9, 24, VerificationLevel.TRUSTED, 18, 6, 8);
+  const jordan = await person("jordan@uwaterloo.ca", "Jordan Lee", "Systems Design Engineering", "2A", 4.8, 19, VerificationLevel.VERIFIED, 14, 3, 5);
+  // Existing beta accounts are kept for the web QA tools described in docs/BACKEND_SETUP.md.
+  const betaOne = await person("beta1@uwaterloo.ca", "Beta Tester One", "Management Engineering", "3A", 4.6, 7, VerificationLevel.VERIFIED, 5, 2, 1);
+  const betaTwo = await person("beta2@uwaterloo.ca", "Beta Tester Two", "Civil Engineering", "2B", 4.7, 9, VerificationLevel.VERIFIED, 8, 3, 2);
 
-  await prisma.rideListing.createMany({
-    data: [
-      {
-        driverId: avery.id,
-        route: "Waterloo -> Pearson Airport",
-        departure: "Sun, 6:30 PM",
-        pricePerSeat: 24,
-        seats: 2,
-        seatStatus: RideSeatStatus.SEATS_OPEN,
-        mode: RideMode.OFFER,
-        car: "Toyota Corolla 2021"
-      },
-      {
-        driverId: maya.id,
-        route: "Waterloo -> Downtown Toronto",
-        departure: "Fri, 4:45 PM",
-        pricePerSeat: 19,
-        seats: 0,
-        seatStatus: RideSeatStatus.WAITLIST,
-        mode: RideMode.OFFER,
-        car: "Tesla Model 3"
-      },
-      {
-        driverId: noah.id,
-        route: "Mississauga -> Waterloo",
-        departure: "Mon, 8:00 AM",
-        pricePerSeat: 21,
-        seats: 3,
-        seatStatus: RideSeatStatus.SEATS_OPEN,
-        mode: RideMode.OFFER,
-        car: "Honda Civic 2020"
-      },
-      {
-        driverId: sana.id,
-        route: "Waterloo -> Vaughan",
-        departure: "Wed, 5:15 PM",
-        pricePerSeat: 17,
-        seats: 1,
-        seatStatus: RideSeatStatus.SEATS_OPEN,
-        mode: RideMode.OFFER,
-        car: "Mazda 3 2019"
-      },
-      {
-        driverId: ethan.id,
-        route: "Kitchener GO -> Waterloo Campus",
-        departure: "Tue, 8:20 AM",
-        pricePerSeat: 8,
-        seats: 3,
-        seatStatus: RideSeatStatus.SEATS_OPEN,
-        mode: RideMode.OFFER,
-        car: "Subaru Impreza 2018"
-      },
-      {
-        driverId: maya.id,
-        route: "Waterloo -> Hamilton",
-        departure: "Sat, 10:30 AM",
-        pricePerSeat: 22,
-        seats: 0,
-        seatStatus: RideSeatStatus.WAITLIST,
-        mode: RideMode.REQUEST,
-        car: "Hyundai Elantra 2022"
-      }
-    ]
-  });
+  // ---- Marketplace: newest first. createdAt drives list order. -----------------------------
+  const listing = (
+    sellerId: string,
+    title: string,
+    description: string,
+    price: number,
+    postedAt: string,
+    location: string,
+    category: string,
+    createdMinutesAgo: number,
+    status: MarketplaceStatus = MarketplaceStatus.AVAILABLE
+  ) =>
+    prisma.marketplaceListing.create({
+      data: { sellerId, title, description, price, postedAt, location, category, status, createdAt: ago(createdMinutesAgo) }
+    });
 
-  await prisma.studyGroup.createMany({
-    data: [
-      {
-        hostId: avery.id,
-        course: "CS 341",
-        title: "Midterm 2 Proof Practice Sprint",
-        schedule: "Tue, 7:00 PM - 9:00 PM",
-        location: "DC 1568",
-        seatsLeft: 4,
-        focus: "Graph reductions + NP-completeness drills"
-      },
-      {
-        hostId: liam.id,
-        course: "STAT 231",
-        title: "Final Prep Problem Marathon",
-        schedule: "Thu, 6:00 PM - 8:30 PM",
-        location: "MC Comfy Lounge",
-        seatsLeft: 2,
-        focus: "Regression intuition and exam-style short answers"
-      },
-      {
-        hostId: maya.id,
-        course: "BIOL 373",
-        title: "Cell Signalling Concept Mapping",
-        schedule: "Sat, 11:00 AM - 1:00 PM",
-        location: "Health Expansion Building",
-        seatsLeft: 7,
-        focus: "Pathway synthesis and memorization systems"
-      },
-      {
-        hostId: ethan.id,
-        course: "ECE 105",
-        title: "Circuit Crunch Before Quiz 3",
-        schedule: "Mon, 8:00 PM - 10:00 PM",
-        location: "E7 Room 4433",
-        seatsLeft: 5,
-        focus: "Nodal analysis, op-amps, and timed quiz drills"
-      },
-      {
-        hostId: sana.id,
-        course: "SYDE 121",
-        title: "Lab 2 Debug + Report Clinic",
-        schedule: "Wed, 6:30 PM - 8:30 PM",
-        location: "E5 Design Bay",
-        seatsLeft: 3,
-        focus: "Arduino debugging and polished report structure"
-      },
-      {
-        hostId: noah.id,
-        course: "MATH 239",
-        title: "Combinatorics Final Problem Ladder",
-        schedule: "Fri, 5:00 PM - 7:30 PM",
-        location: "MC 3001",
-        seatsLeft: 6,
-        focus: "Inclusion-exclusion, recurrences, and counting proofs"
-      }
-    ]
-  });
+  const airpods = await listing(sana.id, "AirPods Pro (2nd Gen)", "Like new, with case and extra ear tips.", 160, "40 min ago", "SLC", "Electronics", 40);
+  await listing(noah.id, "TI-84 Plus CE Calculator", "Fresh batteries, no scratches. Cable included.", 85, "1h ago", "DC Library", "Electronics", 75);
+  await listing(ethan.id, "Mini Fridge (3.1 cu ft)", "Quiet and compact. Pickup before Dec 15.", 70, "3h ago", "UWP Lobby", "Appliances", 190, MarketplaceStatus.PENDING);
+  await listing(jordan.id, "Engineering Mechanics: Statics", "14th edition. Light highlighting in ch. 1-3.", 45, "5h ago", "E5 Foyer", "Textbooks", 300);
+  await listing(priya.id, "Adjustable LED Desk Lamp", "Dimmable with USB charging port.", 15, "1d ago", "V1 Lobby", "Furniture", 60 * 26);
+  await listing(avery.id, "Logitech MX Master 3S", "Used one term. Box and receiver included.", 65, "2d ago", "DC Library", "Electronics", 60 * 50);
+  await listing(liam.id, "Casio fx-991 Calculator", "Needed for MATH 135 this term. Flexible on brand.", 20, "2d ago", "MC Lobby", "Requests", 60 * 52);
+  await listing(avery.id, "Anker 20K Power Bank", "Sold. Thanks to everyone who messaged!", 30, "4d ago", "SLC", "Electronics", 60 * 96, MarketplaceStatus.SOLD);
 
-  const convo = await prisma.conversation.create({
-    data: {
-      contextType: "RIDE"
+  // ---- Rides ---------------------------------------------------------------------------------
+  const ride = (
+    driverId: string,
+    route: string,
+    departure: string,
+    pricePerSeat: number,
+    seats: number,
+    car: string,
+    createdMinutesAgo: number
+  ) =>
+    prisma.rideListing.create({
+      data: {
+        driverId,
+        route,
+        departure,
+        pricePerSeat,
+        seats,
+        car,
+        mode: RideMode.OFFER,
+        seatStatus: seats > 0 ? RideSeatStatus.SEATS_OPEN : RideSeatStatus.WAITLIST,
+        createdAt: ago(createdMinutesAgo)
+      }
+    });
+
+  // Cleanest Request Seat demo: Avery has not requested it, 3 open seats, strong driver.
+  await ride(ethan.id, "Waterloo → Markham", "Sat, 9:00 AM", 18, 3, "Subaru Impreza", 30);
+  // Avery's upcoming ride: seat already requested (2 left of 3).
+  const torontoRide = await ride(maya.id, "Waterloo → Toronto", "Fri, 4:30 PM", 20, 2, "Tesla Model 3", 120);
+  // Avery drives this one.
+  await ride(avery.id, "Waterloo → Mississauga", "Sun, 6:00 PM", 16, 2, "Honda Civic", 240);
+  await ride(noah.id, "Toronto → Waterloo", "Mon, 7:30 AM", 20, 3, "Toyota Corolla", 600);
+  await ride(sana.id, "Waterloo → Pearson Airport", "Thu, 5:15 PM", 28, 0, "Mazda 3", 900);
+  await prisma.rideSeatRequest.create({ data: { rideId: torontoRide.id, userId: avery.id, createdAt: ago(60 * 5) } });
+
+  // ---- Study groups ----------------------------------------------------------------------------
+  const group = (
+    hostId: string,
+    course: string,
+    title: string,
+    schedule: string,
+    location: string,
+    seatsLeft: number,
+    focus: string,
+    createdMinutesAgo: number
+  ) =>
+    prisma.studyGroup.create({
+      data: { hostId, course, title, schedule, location, seatsLeft, focus, createdAt: ago(createdMinutesAgo) }
+    });
+
+  const syde = await group(jordan.id, "SYDE 121", "Midterm Review", "Tue, 6:00 – 8:00 PM", "E5 4106", 3, "Digital computation and problem walkthroughs", 45);
+  await group(priya.id, "ECE 105", "Problem Session", "Wed, 7:00 – 9:00 PM", "DC Library", 4, "Electrostatics and circuit problem sets", 100);
+  await group(liam.id, "STAT 231", "Exam Prep", "Thu, 5:30 – 7:30 PM", "SLC Great Hall", 5, "Regression practice and past exam questions", 160);
+  const mathGroup = await group(avery.id, "MATH 239", "Final Review", "Sat, 11:00 AM – 1:00 PM", "DC Library", 6, "Counting, recurrences, and proof practice", 400);
+  void mathGroup;
+  await prisma.studyGroupMember.create({ data: { groupId: syde.id, userId: avery.id, joinedAt: ago(60 * 20) } });
+
+  // ---- Conversations (Avery's inbox: 2 unread, 1 read) ---------------------------------------------
+  const convo = async (
+    contextType: ConversationContextType,
+    contextId: string,
+    other: { id: string },
+    startedMinutesAgo: number,
+    lines: { from: "avery" | "other"; body: string; minutesAgo: number }[],
+    readThroughMinutesAgo: number | null
+  ) => {
+    const created = await prisma.conversation.create({ data: { contextType, contextId } });
+    await prisma.conversationParticipant.createMany({
+      data: [
+        {
+          conversationId: created.id,
+          userId: avery.id,
+          joinedAt: ago(startedMinutesAgo),
+          lastReadAt: readThroughMinutesAgo === null ? null : ago(readThroughMinutesAgo)
+        },
+        { conversationId: created.id, userId: other.id, joinedAt: ago(startedMinutesAgo), lastReadAt: ago(0) }
+      ]
+    });
+    for (const line of lines) {
+      await prisma.message.create({
+        data: {
+          conversationId: created.id,
+          senderId: line.from === "avery" ? avery.id : other.id,
+          body: line.body,
+          createdAt: ago(line.minutesAgo)
+        }
+      });
     }
-  });
+  };
 
-  await prisma.conversationParticipant.createMany({
-    data: [
-      { conversationId: convo.id, userId: avery.id },
-      { conversationId: convo.id, userId: maya.id }
-    ]
-  });
+  // Marketplace: AirPods. Sana's reply is unread.
+  await convo(
+    ConversationContextType.MARKETPLACE,
+    airpods.id,
+    sana,
+    35,
+    [
+      { from: "avery", body: "Hi! Is the AirPods Pro listing still available?", minutesAgo: 35 },
+      { from: "other", body: "Yes! I can meet at the SLC today after 4.", minutesAgo: 28 }
+    ],
+    33
+  );
+  // Ride Coordination: Maya's Toronto ride. Latest message is unread.
+  await convo(
+    ConversationContextType.RIDE,
+    torontoRide.id,
+    maya,
+    180,
+    [
+      { from: "avery", body: "Thanks for the seat! Where's pickup?", minutesAgo: 180 },
+      { from: "other", body: "University Ave bus stop, 4:30 sharp.", minutesAgo: 165 },
+      { from: "other", body: "I'll message when I'm 5 min away.", minutesAgo: 20 }
+    ],
+    160
+  );
+  // Study Group: SYDE 121. Fully read.
+  await convo(
+    ConversationContextType.STUDY_GROUP,
+    syde.id,
+    jordan,
+    60 * 24,
+    [
+      { from: "other", body: "Welcome to the group! Bring your lab notes.", minutesAgo: 60 * 24 },
+      { from: "avery", body: "Will do, thanks!", minutesAgo: 60 * 23 }
+    ],
+    60 * 22
+  );
 
-  await prisma.message.createMany({
-    data: [
-      {
-        conversationId: convo.id,
-        senderId: maya.id,
-        body: "Can do pickup at University Ave bus stop at 6:10 PM."
-      },
-      {
-        conversationId: convo.id,
-        senderId: avery.id,
-        body: "Perfect, see you there."
-      }
-    ]
-  });
-
+  // ---- Reviews for Avery (cross-feature) --------------------------------------------------------------
   await prisma.review.createMany({
     data: [
-      {
-        authorId: maya.id,
-        subjectId: avery.id,
-        subject: "Smooth airport ride",
-        body: "On time, clear communication, and super safe driving in snow.",
-        rating: 5
-      },
-      {
-        authorId: noah.id,
-        subjectId: avery.id,
-        subject: "Marketplace purchase",
-        body: "Item matched photos and pickup was quick right after class.",
-        rating: 5
-      },
-      {
-        authorId: liam.id,
-        subjectId: avery.id,
-        subject: "Hosted CS 341 session",
-        body: "Structured, focused session that helped our whole group improve.",
-        rating: 4.8
-      },
-      {
-        authorId: betaOne.id,
-        subjectId: betaTwo.id,
-        subject: "Reliable marketplace swap",
-        body: "Fast responses and smooth handoff right after class.",
-        rating: 4.7
-      }
+      { authorId: maya.id, subjectId: avery.id, subject: "Ride to Toronto", body: "On time and a very smooth drive.", rating: 5, createdAt: ago(60 * 24 * 2) },
+      { authorId: noah.id, subjectId: avery.id, subject: "Marketplace sale", body: "Item matched the listing. Quick pickup after class.", rating: 5, createdAt: ago(60 * 24 * 5) },
+      { authorId: jordan.id, subjectId: avery.id, subject: "MATH 239 study session", body: "Well organized and genuinely helpful.", rating: 4.8, createdAt: ago(60 * 24 * 9) },
+      { authorId: priya.id, subjectId: avery.id, subject: "Ride to Mississauga", body: "Friendly, punctual, great communication.", rating: 5, createdAt: ago(60 * 24 * 14) }
     ]
+  });
+  await prisma.review.create({
+    data: {
+      authorId: betaOne.id,
+      subjectId: betaTwo.id,
+      subject: "Marketplace swap",
+      body: "Fast replies and an easy handoff.",
+      rating: 4.7,
+      createdAt: ago(60 * 24 * 3)
+    }
   });
 }

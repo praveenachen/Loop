@@ -1,6 +1,6 @@
 import { useAction } from "../../lib/useAction";
 import { useEffect, useRef, useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from "react-native";
+import { KeyboardAvoidingView, Platform, ScrollView, TextInput, View } from "react-native";
 import { ArrowUp } from "lucide-react-native";
 import {
   SafeAreaView,
@@ -18,7 +18,9 @@ import {
 } from "../../components";
 import { Avatar } from "../../components/CardParts";
 import { useLoop } from "../../lib/AppProvider";
+import { formatMessageTime } from "../../lib/format";
 import { BackButton } from "../../components/BackButton";
+import { PressableScale } from "../../components/PressableScale";
 import { colors, fonts, radius } from "../../theme";
 export default function ThreadScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -137,7 +139,7 @@ export default function ThreadScreen() {
                   </View>
                   {lastInGroup ? (
                     <LoopText variant="meta" style={{ marginTop: 3, marginHorizontal: 6 }}>
-                      {m.time}
+                      {formatMessageTime(m.time)}
                     </LoopText>
                   ) : null}
                 </View>
@@ -186,25 +188,26 @@ export default function ThreadScreen() {
                 fontSize: 16,
               }}
             />
-            <Pressable
+            <PressableScale
               accessibilityRole="button"
               accessibilityLabel="Send message"
               accessibilityState={{ disabled: action.busy || !draft.trim() }}
               disabled={action.busy || !draft.trim()}
               onPress={send}
               hitSlop={4}
-              style={({ pressed }) => ({
+              scaleTo={0.92}
+              style={{
                 width: 40,
                 height: 40,
                 borderRadius: radius.pill,
                 backgroundColor: colors.accent,
                 alignItems: "center",
                 justifyContent: "center",
-                opacity: action.busy || !draft.trim() ? 0.4 : pressed ? 0.75 : 1,
-              })}
+                opacity: action.busy || !draft.trim() ? 0.4 : 1,
+              }}
             >
               <ArrowUp size={20} color={colors.white} />
-            </Pressable>
+            </PressableScale>
           </View>
         </View>
       </KeyboardAvoidingView>

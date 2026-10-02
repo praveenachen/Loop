@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Pressable, View } from "react-native";
+import { View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import {
   LoopPageFrame,
@@ -9,6 +9,7 @@ import {
   LoopLoadState,
 } from "../components";
 import { LoopSearchBar } from "../components/LoopSearchBar";
+import { PressableScale } from "../components/PressableScale";
 import { useLoop } from "../lib/AppProvider";
 import { request } from "../lib/api";
 import type { MarketplaceListing, RideListing, StudyGroup } from "../lib/types";
@@ -106,15 +107,11 @@ export default function SearchScreen() {
               <View key={s.name} style={{ gap: 12 }}>
                 <LoopText variant="sectionHeading">{s.name}</LoopText>
                 {s.items.map((i) => (
-                  <Pressable
+                  <PressableScale
                     key={i.id}
                     accessibilityRole="button"
                     accessibilityLabel={`Open result: ${i.title}`}
                     onPress={() => router.push(i.href)}
-                    style={({ pressed }) => ({
-                      opacity: pressed ? 0.72 : 1,
-                      transform: [{ scale: pressed ? 0.99 : 1 }],
-                    })}
                   >
                     <LoopCard
                       tone={s.tone}
@@ -123,7 +120,7 @@ export default function SearchScreen() {
                       <LoopText variant="cardHeading">{i.title}</LoopText>
                       <LoopText variant="smallBody">{i.subtitle}</LoopText>
                     </LoopCard>
-                  </Pressable>
+                  </PressableScale>
                 ))}
               </View>
             ))}

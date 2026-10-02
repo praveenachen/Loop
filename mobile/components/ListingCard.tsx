@@ -1,11 +1,12 @@
 import { useAction } from "../lib/useAction";
 import { FeedbackBanner } from "./AsyncState";
-import { Pressable, View } from "react-native";
+import { View } from "react-native";
 import { router } from "expo-router";
 import type { MarketplaceListing } from "../lib/types";
 import { useLoop } from "../lib/AppProvider";
 import { LoopCard } from "./LoopCard";
 import { LoopText } from "./LoopText";
+import { PressableScale } from "./PressableScale";
 import { LoopButton } from "./LoopButton";
 import { StatusBadge, WantedBadge } from "./StatusBadge";
 import { isWanted, listingTitle } from "../lib/listing";
@@ -57,14 +58,13 @@ export function ListingCard({
         tone="marketplace"
         left={
           <>
-            <Pressable
+            <PressableScale
               accessibilityRole="button"
               accessibilityLabel={`Open ${wanted ? "request" : "listing"}: ${title}`}
               onPress={() => router.push(`/listings/${listing.id}`)}
-              style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
             >
               <LoopText variant="cardTitle" numberOfLines={1}>{title}</LoopText>
-            </Pressable>
+            </PressableScale>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
               {wanted ? <WantedBadge /> : null}
               {listing.status !== "available" ? <StatusBadge status={listing.status} /> : null}
@@ -106,20 +106,17 @@ export function ListingCard({
         {detail ? (
           <View style={{ flex: 1, minWidth: 120 }}>{heading}</View>
         ) : (
-          <Pressable
+          <PressableScale
             accessibilityRole="button"
             accessibilityLabel={`Open ${wanted ? "request" : "listing"}: ${title}`}
             onPress={() => router.push(`/listings/${listing.id}`)}
-            style={({ pressed }) => ({
+            style={{
               flex: 1,
               minWidth: 120,
-              minHeight: 44,
-              opacity: pressed ? 0.7 : 1,
-              transform: [{ scale: pressed ? 0.99 : 1 }],
-            })}
+              minHeight: 44 }}
           >
             {heading}
-          </Pressable>
+          </PressableScale>
         )}
         <View style={{ gap: 4, alignItems: "flex-end" }}>
           {wanted ? <WantedBadge /> : null}

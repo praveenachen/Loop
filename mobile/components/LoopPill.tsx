@@ -1,6 +1,7 @@
-import { Pressable, View } from "react-native";
-import { colors, radius, spacing } from "../theme";
-import { LoopText } from "./LoopText";
+import { useEffect, useRef } from "react";
+import { Animated, Easing } from "react-native";
+import { colors, radius, spacing, typography } from "../theme";
+import { PressableScale } from "./PressableScale";
 // Static pills remain compact; interactive pills have a 44px minimum target.
 export function LoopPill({
   label,
@@ -17,15 +18,23 @@ export function LoopPill({
   soft?: boolean;
   compact?: boolean;
 }) {
+  // Selection cross-fades colours instead of snapping.
+  const sel = useRef(new Animated.Value(selected ? 1 : 0)).current;
+  useEffect(() => {
+    Animated.timing(sel, {
+      toValue: selected ? 1 : 0,
+      duration: 160,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: false,
+    }).start();
+  }, [selected, sel]);
+  const restingFill = soft ? colors.surfaceSoft : colors.white;
+  const backgroundColor = sel.interpolate({ inputRange: [0, 1], outputRange: [restingFill, colors.ink] });
+  const borderColor = sel.interpolate({ inputRange: [0, 1], outputRange: [colors.stroke, colors.ink] });
+  const textColor = sel.interpolate({ inputRange: [0, 1], outputRange: [colors.inkSoft, colors.white] });
   const style = {
     borderRadius: radius.pill,
     borderWidth: 1,
-    borderColor: selected ? colors.ink : colors.stroke,
-    backgroundColor: selected
-      ? colors.ink
-      : soft
-        ? colors.surfaceSoft
-        : colors.white,
     paddingHorizontal: compact ? 22 : spacing.base,
     paddingVertical: compact ? 3 : spacing.compact,
     minHeight: compact ? 30 : onPress ? 44 : 32,
@@ -37,32 +46,21 @@ export function LoopPill({
   const content = (
     <>
       {icon}
-      <LoopText
-        variant="pill"
-        numberOfLines={1}
-        style={{ color: selected ? colors.white : colors.inkSoft }}
-      >
+      <Animated.Text numberOfLines={1} style={[typography.pill, { color: textColor }]}>
         {label}
-      </LoopText>
+      </Animated.Text>
     </>
   );
   return onPress ? (
-    <Pressable
+    <PressableScale
       onPress={onPress}
       hitSlop={compact ? { top: 7, bottom: 7 } : undefined}
       accessibilityRole="button"
       accessibilityState={{ selected }}
-      style={({ pressed }) => [
-        style,
-        {
-          opacity: pressed ? 0.75 : 1,
-          transform: [{ scale: pressed ? 0.97 : 1 }],
-        },
-      ]}
     >
-      {content}
-    </Pressable>
+      <Animated.View style={[style, { backgroundColor, borderColor }]}>{content}</Animated.View>
+    </PressableScale>
   ) : (
-    <View style={style}>{content}</View>
+    <Animated.View style={[style, { backgroundColor, borderColor }]}>{content}</Animated.View>
   );
 }

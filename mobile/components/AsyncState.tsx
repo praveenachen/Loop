@@ -1,4 +1,5 @@
-import { ActivityIndicator, View } from "react-native";
+import { useEffect, useRef } from "react";
+import { ActivityIndicator, Animated, Easing, View } from "react-native";
 import { CircleAlert, CircleCheck, Inbox } from "lucide-react-native";
 import { colors, radius } from "../theme";
 import { useLoop } from "../lib/AppProvider";
@@ -90,10 +91,15 @@ export function FeedbackBanner({
 }) {
   const Icon = tone === "success" ? CircleCheck : CircleAlert;
   const color = tone === "success" ? colors.trust : colors.study;
+  const fade = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(fade, { toValue: 1, duration: 160, easing: Easing.out(Easing.quad), useNativeDriver: true }).start();
+  }, [fade]);
   return (
-    <View
+    <Animated.View
       accessibilityLiveRegion="polite"
       style={{
+        opacity: fade,
         padding: 12,
         gap: 8,
         flexDirection: "row",
@@ -110,7 +116,7 @@ export function FeedbackBanner({
       <LoopText variant="smallBody" style={{ color, flex: 1 }}>
         {message}
       </LoopText>
-    </View>
+    </Animated.View>
   );
 }
 export function LoopLoadState() {

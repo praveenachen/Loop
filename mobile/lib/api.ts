@@ -30,11 +30,14 @@ export const mobileApi = {
     const [profile, listings, rides, groups, chats, dashboard] = await Promise.all([
       request<{ user: User; reviews: Review[] }>('/api/profile/me'), request<MarketplaceListing[]>('/api/marketplace/listings'), request<RideListing[]>('/api/rides'), request<StudyGroup[]>('/api/study-groups'), request<Conversation[]>('/api/messages/previews'), request<{ user: User }>('/api/dashboard')
     ]);
-    const activity: Activity[] = [
-      ...listings.filter(l => l.isOwner).map(l => ({ id: l.id, entityId: l.id, vertical: 'marketplace' as const, title: listingTitle(l), detail: isWanted(l) ? `Wanted · ${l.location}` : `${l.category} · ${l.location}` })),
-      ...rides.filter(r => r.isOwner || r.requestedByCurrentUser).map(r => ({ id: r.id, entityId: r.id, vertical: 'rides' as const, title: r.route, detail: r.departure })),
-      ...groups.filter(g => g.isOwner || g.joinedByCurrentUser).map(g => ({ id: g.id, entityId: g.id, vertical: 'study' as const, title: `${g.course}: ${g.title}`, detail: g.schedule }))
+    const byVertical: Activity[][] = [
+      listings.filter(l => l.isOwner || l.contactedByCurrentUser).map(l => ({ id: l.id, entityId: l.id, vertical: 'marketplace' as const, title: listingTitle(l), detail: isWanted(l) ? `Wanted · ${l.location}` : `${l.category} · ${l.location}` })),
+      rides.filter(r => r.isOwner || r.requestedByCurrentUser).map(r => ({ id: r.id, entityId: r.id, vertical: 'rides' as const, title: r.route, detail: r.departure })),
+      groups.filter(g => g.isOwner || g.joinedByCurrentUser).map(g => ({ id: g.id, entityId: g.id, vertical: 'study' as const, title: `${g.course}: ${g.title}`, detail: g.schedule }))
     ];
+    // Interleave so the latest items span all three areas instead of one area filling the list.
+    const activity: Activity[] = [];
+    for (let i = 0; byVertical.some(list => i < list.length); i++) for (const list of byVertical) if (i < list.length) activity.push(list[i]);
     return { ...profile, user: dashboard.user, listings, rides, groups, chats, activity };
   },
   thread: (id: string) => request<Message[]>(`/api/messages/${encodeURIComponent(id)}`)

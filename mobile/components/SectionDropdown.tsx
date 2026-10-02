@@ -1,8 +1,26 @@
-import { useRef, useState } from "react";
-import { Dimensions, Modal, Pressable, View } from "react-native";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Animated, Dimensions, Easing, Modal, Pressable, View, type StyleProp, type ViewStyle } from "react-native";
 import { Check, ChevronDown } from "lucide-react-native";
 import { colors, radius, shadows } from "../theme";
 import { LoopText } from "./LoopText";
+import { PressableScale } from "./PressableScale";
+// Menu fades and settles 4px into place on open; the Modal fade handles close.
+function MenuSurface({ style, children }: { style: StyleProp<ViewStyle>; children: ReactNode }) {
+  const t = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(t, { toValue: 1, duration: 140, easing: Easing.out(Easing.quad), useNativeDriver: true }).start();
+  }, [t]);
+  return (
+    <Animated.View
+      style={[
+        style,
+        { opacity: t, transform: [{ translateY: t.interpolate({ inputRange: [0, 1], outputRange: [-4, 0] }) }] },
+      ]}
+    >
+      {children}
+    </Animated.View>
+  );
+}
 // Compact dropdown that replaces the page-level tab pills; the menu opens anchored under the button.
 export function SectionDropdown({
   options,
@@ -22,26 +40,26 @@ export function SectionDropdown({
     });
   return (
     <>
-      <Pressable
-        ref={ref}
+      <View ref={ref} collapsable={false}>
+      <PressableScale
         onPress={open}
         accessibilityRole="button"
         hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
         accessibilityLabel={`Filter: ${value}`}
         accessibilityState={{ expanded: !!anchor }}
-        style={({ pressed }) => ({
+        style={{
           flexDirection: "row",
           alignItems: "center",
           gap: 4,
           paddingHorizontal: 4,
-          opacity: pressed ? 0.6 : 1,
-        })}
+        }}
       >
         <LoopText variant="pill" numberOfLines={1} style={{ color: colors.ink, lineHeight: 21 }}>
           {value}
         </LoopText>
         <ChevronDown size={16} color={colors.ink} />
-      </Pressable>
+      </PressableScale>
+      </View>
       <Modal transparent visible={!!anchor} animationType="fade" onRequestClose={() => setAnchor(null)}>
         <Pressable
           style={{ flex: 1 }}
@@ -49,7 +67,7 @@ export function SectionDropdown({
           accessibilityLabel="Close menu"
         >
           {anchor ? (
-            <View
+            <MenuSurface
               style={[
                 shadows.lift,
                 {
@@ -90,7 +108,7 @@ export function SectionDropdown({
                   {option === value ? <Check size={16} color={colors.ink} /> : null}
                 </Pressable>
               ))}
-            </View>
+            </MenuSurface>
           ) : null}
         </Pressable>
       </Modal>

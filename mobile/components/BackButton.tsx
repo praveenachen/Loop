@@ -1,17 +1,18 @@
-import { Pressable } from "react-native";
 import { ChevronLeft } from "lucide-react-native";
 import { router } from "expo-router";
 import { colors, radius } from "../theme";
+import { PressableScale } from "./PressableScale";
 export function BackButton({ fallback = "/" }: { fallback?: string }) {
   return (
-    <Pressable
+    <PressableScale
       accessibilityRole="button"
       accessibilityLabel="Go back"
       onPress={() => {
         if (router.canGoBack()) router.back();
         else router.replace(fallback);
       }}
-      style={({ pressed }) => ({
+      scaleTo={0.94}
+      style={{
         height: 44,
         width: 44,
         borderWidth: 1,
@@ -20,11 +21,9 @@ export function BackButton({ fallback = "/" }: { fallback?: string }) {
         backgroundColor: colors.white,
         alignItems: "center",
         justifyContent: "center",
-        opacity: pressed ? 0.7 : 1,
-        transform: [{ scale: pressed ? 0.94 : 1 }],
-      })}
+      }}
     >
       <ChevronLeft size={20} color={colors.ink} />
-    </Pressable>
+    </PressableScale>
   );
 }

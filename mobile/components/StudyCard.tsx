@@ -1,6 +1,5 @@
 import { useAction } from "../lib/useAction";
 import { FeedbackBanner } from "./AsyncState";
-import { Pressable } from "react-native";
 import { router } from "expo-router";
 import { CalendarDays, MapPin, Users } from "lucide-react-native";
 import type { StudyGroup } from "../lib/types";
@@ -8,6 +7,7 @@ import { useLoop } from "../lib/AppProvider";
 import { colors } from "../theme";
 import { LoopCard } from "./LoopCard";
 import { LoopText } from "./LoopText";
+import { PressableScale } from "./PressableScale";
 import { LoopButton } from "./LoopButton";
 import { CardFooter, TrustRow, MetaLine } from "./CardParts";
 import { CompactCard, CardTopSlot } from "./CompactCard";
@@ -27,14 +27,13 @@ export function StudyCard({
         tone="study"
         left={
           <>
-            <Pressable
+            <PressableScale
               accessibilityRole="button"
               accessibilityLabel={`Open study group: ${group.title}`}
               onPress={() => router.push(`/groups/${group.id}`)}
-              style={({ pressed }) => ({ opacity: pressed ? 0.72 : 1 })}
             >
               <LoopText variant="cardTitle" numberOfLines={1}>{title}</LoopText>
-            </Pressable>
+            </PressableScale>
             <LoopText variant="meta" numberOfLines={1}>
               {group.schedule}
             </LoopText>
@@ -56,7 +55,7 @@ export function StudyCard({
               disabled={
                 action.busy || group.isOwner || group.joinedByCurrentUser || group.seatsLeft <= 0
               }
-              onPress={() => { void action.run(() => mutate(`/api/study-groups/${group.id}/join`), "You joined the study group."); }}
+              onPress={() => { void action.run(() => mutate(`/api/study-groups/${group.id}/join`), "You joined the study group.", true); }}
             >
               {group.isOwner
                 ? "Your Group"
@@ -81,19 +80,16 @@ export function StudyCard({
       {detail ? (
         <LoopText variant="cardHeading">{title}</LoopText>
       ) : (
-        <Pressable
+        <PressableScale
           accessibilityRole="button"
           accessibilityLabel={`Open study group: ${group.title}`}
           onPress={() => router.push(`/groups/${group.id}`)}
-          style={({ pressed }) => ({
+          style={{
             minHeight: 44,
-            justifyContent: "center",
-            opacity: pressed ? 0.72 : 1,
-            transform: [{ scale: pressed ? 0.99 : 1 }],
-          })}
+            justifyContent: "center" }}
         >
           <LoopText variant="cardHeading" numberOfLines={2}>{title}</LoopText>
-        </Pressable>
+        </PressableScale>
       )}
       <LoopText variant="smallBody" numberOfLines={detail ? undefined : 3}>{group.focus}</LoopText>
       <CardFooter>
@@ -113,7 +109,7 @@ export function StudyCard({
           disabled={
             action.busy || group.isOwner || group.joinedByCurrentUser || group.seatsLeft <= 0
           }
-          onPress={() => { void action.run(() => mutate(`/api/study-groups/${group.id}/join`), "You joined the study group."); }}
+          onPress={() => { void action.run(() => mutate(`/api/study-groups/${group.id}/join`), "You joined the study group.", true); }}
         >
           {group.isOwner
             ? "Your Group"

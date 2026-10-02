@@ -62,3 +62,12 @@ All APIs are auth-protected via NextAuth middleware except sign-in route.
 - `/beta-lab`: create new marketplace/ride/study records from UI.
 - `/beta-admin`: one-click reset + reseed database.
 - Top nav `Log out` button: switch between beta users quickly.
+
+## 8. Demo recording dataset
+`lib/dev-seed.ts` holds a fixed, non-random demo dataset. Primary demo account: `avery@uwaterloo.ca` / `LoopPass123!`.
+
+Reset to a clean demo state (also logs out existing mobile sessions, so sign in again afterwards):
+```bash
+npm run demo:reset
+```
+Run it right before recording: message times ("35m", "3h") are relative to the moment of the reset.
