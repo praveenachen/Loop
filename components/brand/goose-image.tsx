@@ -27,7 +27,7 @@ export function GooseImage({ src, alt, className, fallbackClassName }: GooseImag
     <img
       src={src}
       alt={alt}
-      className={cn("object-contain mix-blend-multiply", className)}
+      className={cn("object-contain", className)}
       onError={() => setFailed(true)}
     />
   );

@@ -6,6 +6,7 @@ export * from "./LoopButton";
 export * from "./LoopPill";
 export * from "./LoopTabs";
 export * from "./LoopFilterRow";
+export * from "./LoopSearchBar";
 export * from "./VerificationBadge";
 export * from "./RatingChip";
 export * from "./MobileHero";

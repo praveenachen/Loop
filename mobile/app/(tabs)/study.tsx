@@ -14,13 +14,16 @@ import { useLoop } from "../../lib/AppProvider";
 export default function StudyScreen() {
   const { data, loading, error } = useLoop();
   const [tab, setTab] = useState("Find a Team");
-  const [filter, setFilter] = useState("All courses");
+  const [searchQuery, setSearchQuery] = useState("");
+  const query = searchQuery.trim().toLowerCase();
   const visible = data.groups.filter(
     (g) =>
       (tab !== "Your History" || g.isOwner || g.joinedByCurrentUser) &&
       (tab !== "Create a Request" || g.isOwner) &&
-      (filter === "All courses" ||
-        (filter === "Open spots" ? g.seatsLeft > 0 : g.course === filter)),
+      (!query ||
+        [g.course, g.title, g.schedule, g.location, g.focus, g.host.name].some(
+          (value) => value.toLowerCase().includes(query),
+        )),
   );
   return (
     <LoopPageFrame
@@ -34,16 +37,9 @@ export default function StudyScreen() {
         setTab(t);
         if (t === "Create a Request") router.push("/forms/group");
       }}
-      filters={[
-        "All courses",
-        "Open spots",
-        "SYDE 121",
-        "ECE 105",
-        "CS 341",
-        "STAT 231",
-      ]}
-      activeFilter={filter}
-      onFilterChange={setFilter}
+      searchValue={searchQuery}
+      searchPlaceholder="Search courses, topics, hosts, or locations"
+      onSearchChange={setSearchQuery}
       actions={
         <LoopButton
           variant="study"

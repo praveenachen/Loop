@@ -15,7 +15,7 @@ export default function StudyGroupsPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [activeTab, setActiveTab] = useState("Find a Team");
-  const [activeFilter, setActiveFilter] = useState("All courses");
+  const [searchQuery, setSearchQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ message: string; tone: "success" | "error" } | null>(null);
@@ -45,11 +45,18 @@ export default function StudyGroupsPage() {
     return studyGroups.filter((group) => {
       if (activeTab === "Your History" && !group.isOwner && !group.joinedByCurrentUser) return false;
       if (activeTab === "Create a Request" && !group.isOwner) return false;
-      if (activeFilter === "Open spots" && group.seatsLeft <= 0) return false;
-      if (activeFilter !== "All courses" && activeFilter !== "Open spots" && group.course !== activeFilter) return false;
+      const query = searchQuery.trim().toLowerCase();
+      if (query && ![
+        group.course,
+        group.title,
+        group.schedule,
+        group.location,
+        group.focus,
+        group.host.name
+      ].some((value) => value.toLowerCase().includes(query))) return false;
       return true;
     });
-  }, [activeFilter, activeTab, studyGroups]);
+  }, [activeTab, searchQuery, studyGroups]);
 
   async function createGroup(event: FormEvent) {
     event.preventDefault();
@@ -110,9 +117,9 @@ export default function StudyGroupsPage() {
         setActiveTab(tab);
         if (tab === "Create a Request") setDialogOpen(true);
       }}
-      filters={["All courses", "Open spots", "SYDE 121", "ECE 105", "CS 341", "STAT 231"]}
-      activeFilter={activeFilter}
-      onFilterChange={setActiveFilter}
+      searchValue={searchQuery}
+      searchPlaceholder="Search courses, topics, hosts, or locations"
+      onSearchChange={setSearchQuery}
       tone="study"
       actions={
         <Button variant="study" onClick={() => { setFeedback(null); setDialogOpen(true); }}>

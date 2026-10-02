@@ -100,23 +100,23 @@ export default function HomePage() {
       }
     >
       <div className="space-y-6">
-        {activeTab === "Overview" ? <div className="grid gap-4 lg:grid-cols-3">
+        {activeTab === "Overview" ? <div className="grid grid-cols-3 gap-3 md:gap-4">
           {quickActions.map((action) => {
             const Icon = action.icon;
             return (
               <Link
                 key={action.title}
                 href={action.href}
-                className="rounded-[24px] border border-stroke bg-white p-4 shadow-card transition hover:-translate-y-0.5 hover:shadow-lift"
+                className="min-w-0 rounded-[24px] border border-stroke bg-white p-3 shadow-card transition hover:-translate-y-0.5 hover:shadow-lift md:p-4"
               >
                 <p className="inline-flex items-center gap-2 rounded-full bg-surface-soft px-3 py-1 text-xs font-extrabold uppercase tracking-[0.15em] text-ink-soft">
                   <Icon className="h-3.5 w-3.5" />
                   Quick start
                 </p>
-                <h3 className="mt-3 font-display text-2xl font-semibold text-ink">{action.title}</h3>
-                <p className="mt-1 text-sm text-ink-soft">{action.caption}</p>
-                <div className={`mt-4 grid h-44 w-44 place-items-center rounded-full ${action.tone} mx-auto`}>
-                  <GooseImage src={action.image} alt={action.title} className="h-28 w-28" fallbackClassName="h-28 w-28" />
+                <h3 className="mt-3 font-display text-lg font-semibold text-ink md:text-2xl">{action.title}</h3>
+                <p className="mt-1 hidden text-sm text-ink-soft sm:block">{action.caption}</p>
+                <div className={`mx-auto mt-4 grid aspect-square w-full max-w-44 place-items-center rounded-full ${action.tone}`}>
+                  <GooseImage src={action.image} alt={action.title} className="h-20 w-20 md:h-28 md:w-28" fallbackClassName="h-20 w-20 md:h-28 md:w-28" />
                 </div>
               </Link>
             );

@@ -3,7 +3,8 @@ import { LoopScreen } from "./LoopScreen";
 import { MobileHero, type MobileHeroProps } from "./MobileHero";
 import { LoopTabs } from "./LoopTabs";
 import { LoopFilterRow } from "./LoopFilterRow";
-import { LoopCard } from "./LoopCard";
+import { LoopSearchBar } from "./LoopSearchBar";
+import { View } from "react-native";
 export function LoopPageFrame({
   children,
   tab = true,
@@ -13,6 +14,9 @@ export function LoopPageFrame({
   filters,
   activeFilter,
   onFilterChange,
+  searchValue,
+  searchPlaceholder,
+  onSearchChange,
   ...hero
 }: MobileHeroProps & {
   children: ReactNode;
@@ -23,21 +27,30 @@ export function LoopPageFrame({
   filters?: readonly string[];
   activeFilter?: string;
   onFilterChange?: (filter: string) => void;
+  searchValue?: string;
+  searchPlaceholder?: string;
+  onSearchChange?: (value: string) => void;
 }) {
   return (
     <LoopScreen tab={tab}>
       <MobileHero {...hero} />
       <LoopTabs items={tabs} active={activeTab} onChange={onTabChange} />
-      {filters && activeFilter !== undefined && onFilterChange ? (
+      {onSearchChange ? (
+        <LoopSearchBar
+          value={searchValue ?? ""}
+          placeholder={searchPlaceholder ?? "Search"}
+          onChange={onSearchChange}
+        />
+      ) : filters && activeFilter !== undefined && onFilterChange ? (
         <LoopFilterRow
           items={filters}
           active={activeFilter}
           onChange={onFilterChange}
         />
       ) : null}
-      <LoopCard panel style={{ padding: 16, gap: 20 }}>
+      <View style={{ paddingHorizontal: 2, gap: 20 }}>
         {children}
-      </LoopCard>
+      </View>
     </LoopScreen>
   );
 }

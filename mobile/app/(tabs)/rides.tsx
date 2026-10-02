@@ -15,16 +15,17 @@ import { useLoop } from "../../lib/AppProvider";
 export default function RidesScreen() {
   const { data, loading, error } = useLoop();
   const [tab, setTab] = useState("Request a Ride");
-  const [filter, setFilter] = useState("All rides");
+  const [searchQuery, setSearchQuery] = useState("");
+  const query = searchQuery.trim().toLowerCase();
   const visible = data.rides.filter(
     (r) =>
       (tab !== "Request a Ride" || r.mode !== "request") &&
       (tab !== "Offer to Drive" || r.mode === "request") &&
       (tab !== "History" || r.isOwner || r.requestedByCurrentUser) &&
-      (filter !== "Seats open" ||
-        (r.seats > 0 && r.seatStatus === "seats-open")) &&
-      (filter !== "Under $20" || r.pricePerSeat < 20) &&
-      (filter !== "Top rated" || r.driver.rating >= 4.9),
+      (!query ||
+        [r.route, r.departure, r.car, r.driver.name, `$${r.pricePerSeat}`].some(
+          (value) => value.toLowerCase().includes(query),
+        )),
   );
   return (
     <LoopPageFrame
@@ -35,9 +36,9 @@ export default function RidesScreen() {
       tabs={["Request a Ride", "Offer to Drive", "History"]}
       activeTab={tab}
       onTabChange={setTab}
-      filters={["All rides", "Seats open", "Under $20", "Top rated"]}
-      activeFilter={filter}
-      onFilterChange={setFilter}
+      searchValue={searchQuery}
+      searchPlaceholder="Search routes, times, drivers, or vehicles"
+      onSearchChange={setSearchQuery}
       actions={
         <>
           <LoopButton

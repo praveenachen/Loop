@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
 import { router } from "expo-router";
 import { Car, BookOpen, ShoppingBag } from "lucide-react-native";
 import {
@@ -37,32 +37,43 @@ export default function HomeScreen() {
       }
     >
       {tab === "Overview" ? (
-        <>
-          <ActionCard
-            title="Need a ride?"
-            description="Match with trusted drivers in minutes."
-            tone="rides"
-            goose="driver"
-            icon={<Car size={14} color={colors.inkSoft} />}
-            onPress={() => router.push("/rides")}
-          />
-          <ActionCard
-            title="Need to study?"
-            description="Join focused groups for your course."
-            tone="study"
-            goose="reader"
-            icon={<BookOpen size={14} color={colors.inkSoft} />}
-            onPress={() => router.push("/study")}
-          />
-          <ActionCard
-            title="Need stuff?"
-            description="Buy, sell, and request with confidence."
-            tone="marketplace"
-            goose="trophy"
-            icon={<ShoppingBag size={14} color={colors.inkSoft} />}
-            onPress={() => router.push("/marketplace")}
-          />
-        </>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ gap: 12, paddingRight: 2 }}
+          accessibilityLabel="Quick actions"
+        >
+          <View style={{ width: 280 }}>
+            <ActionCard
+              title="Need a ride?"
+              description="Match with trusted drivers in minutes."
+              tone="rides"
+              goose="driver"
+              icon={<Car size={14} color={colors.inkSoft} />}
+              onPress={() => router.push("/rides")}
+            />
+          </View>
+          <View style={{ width: 280 }}>
+            <ActionCard
+              title="Need to study?"
+              description="Join focused groups for your course."
+              tone="study"
+              goose="reader"
+              icon={<BookOpen size={14} color={colors.inkSoft} />}
+              onPress={() => router.push("/study")}
+            />
+          </View>
+          <View style={{ width: 280 }}>
+            <ActionCard
+              title="Need stuff?"
+              description="Buy, sell, and request with confidence."
+              tone="marketplace"
+              goose="trophy"
+              icon={<ShoppingBag size={14} color={colors.inkSoft} />}
+              onPress={() => router.push("/marketplace")}
+            />
+          </View>
+        </ScrollView>
       ) : null}
       <LoopLoadState />
       {!loading && !error ? (

@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Sparkles } from "lucide-react";
+import { Search, Sparkles } from "lucide-react";
 
 import { GooseImage } from "@/components/brand/goose-image";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,9 @@ import { cn } from "@/lib/utils";
   filters?: string[];
   activeFilter?: string;
   onFilterChange?: (filter: string) => void;
+  searchValue?: string;
+  searchPlaceholder?: string;
+  onSearchChange?: (value: string) => void;
   actions?: ReactNode;
   children: ReactNode;
   tone?: "marketplace" | "rides" | "study" | "neutral";
@@ -38,6 +41,9 @@ export function LoopPageFrame({
   filters,
   activeFilter,
   onFilterChange,
+  searchValue,
+  searchPlaceholder = "Search",
+  onSearchChange,
   actions,
   children,
   tone = "neutral"
@@ -83,7 +89,19 @@ export function LoopPageFrame({
         </div>
       </section>
 
-      {filters?.length ? (
+      {onSearchChange ? (
+        <label className="flex w-full items-center gap-3 rounded-2xl border border-stroke bg-white px-4 py-3 shadow-card focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/15">
+          <Search className="h-5 w-5 shrink-0 text-ink-soft" aria-hidden="true" />
+          <span className="sr-only">{searchPlaceholder}</span>
+          <input
+            type="search"
+            value={searchValue ?? ""}
+            onChange={(event) => onSearchChange(event.target.value)}
+            placeholder={searchPlaceholder}
+            className="min-w-0 flex-1 bg-transparent text-base font-semibold text-ink outline-none placeholder:font-medium placeholder:text-ink-soft"
+          />
+        </label>
+      ) : filters?.length ? (
         <section className="loop-panel p-3">
           <div className="flex flex-wrap gap-2">
             {filters.map((filter) => (
@@ -104,7 +122,7 @@ export function LoopPageFrame({
         </section>
       ) : null}
 
-      <section className="loop-panel p-5 lg:p-6">{children}</section>
+      <section className="px-1 py-2 lg:px-2">{children}</section>
     </div>
   );
 }

@@ -20,7 +20,7 @@ export default function MarketplacePage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [activeTab, setActiveTab] = useState("Browse");
-  const [activeFilter, setActiveFilter] = useState("All categories");
+  const [searchQuery, setSearchQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ message: string; tone: "success" | "error" } | null>(null);
@@ -50,10 +50,17 @@ export default function MarketplacePage() {
     return marketplaceListings.filter((item) => {
       if (activeTab === "Sell" && !item.isOwner) return false;
       if (activeTab === "Requests" && item.category.toLowerCase() !== "requests") return false;
-      if (activeFilter !== "All categories" && item.category.toLowerCase() !== activeFilter.toLowerCase()) return false;
+      const query = searchQuery.trim().toLowerCase();
+      if (query && ![
+        item.title,
+        item.description,
+        item.category,
+        item.location,
+        item.seller.name
+      ].some((value) => value.toLowerCase().includes(query))) return false;
       return true;
     });
-  }, [activeFilter, activeTab, marketplaceListings]);
+  }, [activeTab, marketplaceListings, searchQuery]);
 
   async function createListing(event: FormEvent) {
     event.preventDefault();
@@ -115,11 +122,10 @@ export default function MarketplacePage() {
       activeTab={activeTab}
       onTabChange={(tab) => {
         setActiveTab(tab);
-        if (tab === "Requests") setActiveFilter("All categories");
       }}
-      filters={["All categories", "Textbooks", "Furniture", "Electronics", "Requests"]}
-      activeFilter={activeFilter}
-      onFilterChange={setActiveFilter}
+      searchValue={searchQuery}
+      searchPlaceholder="Search listings, categories, locations, or sellers"
+      onSearchChange={setSearchQuery}
       tone="marketplace"
       actions={
         <Button variant="marketplace" onClick={() => { setFeedback(null); setDialogOpen(true); }}>

@@ -12,7 +12,7 @@ import { RideListing } from "@/types";
 
 export default function RidesPage() {
   const [mode, setMode] = useState<"Request a Ride" | "Offer to Drive" | "History">("Request a Ride");
-  const [activeFilter, setActiveFilter] = useState("All rides");
+  const [searchQuery, setSearchQuery] = useState("");
   const [rideListings, setRideListings] = useState<RideListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -100,12 +100,17 @@ export default function RidesPage() {
       if (mode === "Request a Ride" && ride.mode === "request") return false;
       if (mode === "Offer to Drive" && ride.mode !== "request") return false;
       if (mode === "History" && !ride.isOwner && !ride.requestedByCurrentUser) return false;
-      if (activeFilter === "Seats open" && (ride.seats <= 0 || ride.seatStatus !== "seats-open")) return false;
-      if (activeFilter === "Under $20" && ride.pricePerSeat >= 20) return false;
-      if (activeFilter === "Top rated" && ride.driver.rating < 4.9) return false;
+      const query = searchQuery.trim().toLowerCase();
+      if (query && ![
+        ride.route,
+        ride.departure,
+        ride.car,
+        ride.driver.name,
+        `$${ride.pricePerSeat}`
+      ].some((value) => value.toLowerCase().includes(query))) return false;
       return true;
     });
-  }, [activeFilter, mode, rideListings]);
+  }, [mode, rideListings, searchQuery]);
 
   return (
     <LoopPageFrame
@@ -116,9 +121,9 @@ export default function RidesPage() {
       tabs={["Request a Ride", "Offer to Drive", "History"]}
       activeTab={mode}
       onTabChange={(tab) => setMode(tab as typeof mode)}
-      filters={["All rides", "Seats open", "Under $20", "Top rated"]}
-      activeFilter={activeFilter}
-      onFilterChange={setActiveFilter}
+      searchValue={searchQuery}
+      searchPlaceholder="Search routes, times, drivers, or vehicles"
+      onSearchChange={setSearchQuery}
       tone="rides"
       actions={
         <Button variant="rides" onClick={() => openCreateDialog(mode === "Offer to Drive" ? "REQUEST" : "OFFER")}>

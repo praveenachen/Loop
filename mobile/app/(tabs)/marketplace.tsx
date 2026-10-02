@@ -15,13 +15,16 @@ import { useLoop } from "../../lib/AppProvider";
 export default function MarketplaceScreen() {
   const { data, loading, error } = useLoop();
   const [tab, setTab] = useState("Browse");
-  const [filter, setFilter] = useState("All categories");
+  const [searchQuery, setSearchQuery] = useState("");
+  const query = searchQuery.trim().toLowerCase();
   const visible = data.listings.filter(
     (l) =>
       (tab !== "Sell" || l.isOwner) &&
       (tab !== "Requests" || l.category.toLowerCase() === "requests") &&
-      (filter === "All categories" ||
-        l.category.toLowerCase() === filter.toLowerCase()),
+      (!query ||
+        [l.title, l.description, l.category, l.location, l.seller.name].some(
+          (value) => value.toLowerCase().includes(query),
+        )),
   );
   return (
     <LoopPageFrame
@@ -33,17 +36,10 @@ export default function MarketplaceScreen() {
       activeTab={tab}
       onTabChange={(t) => {
         setTab(t);
-        if (t === "Requests") setFilter("All categories");
       }}
-      filters={[
-        "All categories",
-        "Textbooks",
-        "Furniture",
-        "Electronics",
-        "Requests",
-      ]}
-      activeFilter={filter}
-      onFilterChange={setFilter}
+      searchValue={searchQuery}
+      searchPlaceholder="Search listings, categories, or sellers"
+      onSearchChange={setSearchQuery}
       actions={
         <LoopButton
           icon={<Plus size={16} color={colors.white} />}
