@@ -7,7 +7,7 @@ export default function CreateGroup() {
   return (
     <LoopForm
       title="Create Study Group"
-      description="Set a course, time, and focus so classmates can find your session."
+      description="Share the course, time, location, and focus."
       fields={groupFields}
       initialValues={{ seatsLeft: "1" }}
       submitLabel="Publish Group"

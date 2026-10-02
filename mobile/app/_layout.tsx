@@ -80,17 +80,17 @@ function SessionStack() {
         >
           <Stack.Protected guard={signedIn}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="search" options={{ title: "Search Loop" }} />
+          <Stack.Screen name="search" options={{ title: "" }} />
           <Stack.Screen
             name="messages/[id]"
             options={{ title: "Conversation" }}
           />
           <Stack.Screen
             name="listings/[id]"
-            options={{ title: "Marketplace Listing" }}
+            options={{ title: "" }}
           />
-          <Stack.Screen name="ride/[id]" options={{ title: "Ride Details" }} />
-          <Stack.Screen name="groups/[id]" options={{ title: "Study Group" }} />
+          <Stack.Screen name="ride/[id]" options={{ title: "" }} />
+          <Stack.Screen name="groups/[id]" options={{ title: "" }} />
           {(
             [
               "forms/listing",
@@ -104,20 +104,16 @@ function SessionStack() {
               name={name}
               options={{
                 presentation: "fullScreenModal",
-                title:
-                  name === "forms/listing"
-                    ? "Create Listing"
-                    : name === "forms/ride"
-                      ? "Plan a Trip"
-                      : name === "forms/group"
-                        ? "Create Group"
-                        : "Edit Profile",
+                title: "",
               }}
             />
           ))}
-          <Stack.Screen name="profile" options={{ title: "Profile" }} />
-          <Stack.Screen name="safety" options={{ title: "Safety + Trust" }} />
+          <Stack.Screen name="profile" options={{ headerShown: false }} />
+          <Stack.Screen name="safety" options={{ title: "" }} />
           </Stack.Protected>
-          <Stack.Protected guard={!signedIn}><Stack.Screen name="auth/sign-in" options={{ title: "Student Access" }} /></Stack.Protected>
+          <Stack.Protected guard={!signedIn}>
+            <Stack.Screen name="auth/splash" options={{ headerShown: false }} />
+            <Stack.Screen name="auth/sign-in" options={{ headerShown: false }} />
+          </Stack.Protected>
         </Stack>;
 }

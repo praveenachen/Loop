@@ -16,6 +16,8 @@ export function LoopSearchBar({
     <View
       style={{
         minHeight: 48,
+        width: "100%",
+        maxWidth: "100%",
         flexDirection: "row",
         alignItems: "center",
         gap: 10,
@@ -34,7 +36,8 @@ export function LoopSearchBar({
         placeholderTextColor={colors.inkSoft}
         accessibilityLabel={placeholder}
         returnKeyType="search"
-        clearButtonMode="while-editing"
+        autoCapitalize="none"
+        autoCorrect={false}
         style={{
           minWidth: 0,
           flex: 1,
@@ -50,6 +53,10 @@ export function LoopSearchBar({
           accessibilityRole="button"
           accessibilityLabel="Clear search"
           hitSlop={10}
+          style={({ pressed }) => ({
+            opacity: pressed ? 0.65 : 1,
+            transform: [{ scale: pressed ? 0.92 : 1 }],
+          })}
         >
           <X size={18} color={colors.inkSoft} />
         </Pressable>

@@ -16,7 +16,7 @@ export default function SafetyScreen() {
         <LoopText variant="sectionHeading">Trust stays visible</LoopText>
         <LoopText>
           Loop carries student verification and ratings across listings and
-          rides. Verification badges reflect your Loop account; additional verification is not part of this migration.
+          rides. Verification badges reflect each member's Loop account.
         </LoopText>
       </LoopCard>
     </LoopScreen>

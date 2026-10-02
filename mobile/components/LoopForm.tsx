@@ -74,9 +74,6 @@ export function LoopForm({
         <LoopButton variant="secondary" onPress={() => dismissTo(fallback)}>
           Cancel
         </LoopButton>
-        <LoopText variant="chip">
-          Changes are saved to your Loop account.
-        </LoopText>
       </LoopCard>
     </FormScreen>
   );

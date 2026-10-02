@@ -1,8 +1,8 @@
 import { useAction } from "../lib/useAction";
 import { FeedbackBanner } from "./AsyncState";
-import { Pressable } from "react-native";
+import { Pressable, View } from "react-native";
 import { router } from "expo-router";
-import { Car, MapPin, Users } from "lucide-react-native";
+import { Car, Users } from "lucide-react-native";
 import type { RideListing } from "../lib/types";
 import { useLoop } from "../lib/AppProvider";
 import { colors } from "../theme";
@@ -11,6 +11,8 @@ import { LoopText } from "./LoopText";
 import { LoopButton } from "./LoopButton";
 import { StatusBadge } from "./StatusBadge";
 import { CardFooter, TrustRow, MetaLine } from "./CardParts";
+import { CompactCard, CardTopSlot } from "./CompactCard";
+import { PriceText } from "./PriceText";
 export function RideCard({
   ride,
   detail = false,
@@ -31,6 +33,56 @@ export function RideCard({
           : unavailable
             ? "Ride Full"
             : "Request Seat";
+  if (!detail)
+    return (
+      <CompactCard
+        tone="rides"
+        left={
+          <>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Open ride: ${ride.route}`}
+              onPress={() => router.push(`/ride/${ride.id}`)}
+              style={({ pressed }) => ({ opacity: pressed ? 0.72 : 1 })}
+            >
+              <LoopText variant="cardTitle" numberOfLines={1}>{ride.route}</LoopText>
+            </Pressable>
+            <LoopText variant="meta" numberOfLines={1}>
+              {ride.departure}
+            </LoopText>
+            <LoopText variant="meta" numberOfLines={1}>
+              {ride.mode === "request" ? "Looking for a driver" : `${ride.seats} seat${ride.seats === 1 ? "" : "s"} left`}
+            </LoopText>
+          </>
+        }
+        right={
+          <>
+            <CardTopSlot>
+              <PriceText amount={ride.pricePerSeat} unit="/seat" />
+            </CardTopSlot>
+            <LoopButton
+              compact
+              variant="rides"
+              disabled={
+                action.busy || ride.mode === "request" ||
+                ride.isOwner ||
+                ride.requestedByCurrentUser ||
+                unavailable
+              }
+              onPress={() => { void action.run(() => mutate(`/api/rides/${ride.id}/request-seat`), "Seat requested successfully."); }}
+            >
+              {label}
+            </LoopButton>
+          </>
+        }
+        below={
+          <>
+            {action.error ? <FeedbackBanner tone="error" message={action.error} /> : null}
+            {action.success ? <FeedbackBanner message={action.success} /> : null}
+          </>
+        }
+      />
+    );
   return (
     <LoopCard tone="rides">
       {detail ? (
@@ -40,18 +92,21 @@ export function RideCard({
           accessibilityRole="button"
           accessibilityLabel={`Open ride: ${ride.route}`}
           onPress={() => router.push(`/ride/${ride.id}`)}
-          style={{ minHeight: 44, justifyContent: "center" }}
+          style={({ pressed }) => ({
+            minHeight: 44,
+            justifyContent: "center",
+            opacity: pressed ? 0.72 : 1,
+            transform: [{ scale: pressed ? 0.99 : 1 }],
+          })}
         >
-          <LoopText variant="cardHeading">{ride.route}</LoopText>
+          <LoopText variant="cardHeading" numberOfLines={2}>{ride.route}</LoopText>
         </Pressable>
       )}
       <StatusBadge status={ride.seatStatus} />
-      <LoopText variant="smallBody">
+      <LoopText variant="smallBody" numberOfLines={2}>
         {ride.departure} • ${ride.pricePerSeat}/seat
       </LoopText>
-      <LoopText variant="smallBody">
-        {ride.car} • Pickup coordinated in-app. Verified students only.
-      </LoopText>
+      <LoopText variant="smallBody" numberOfLines={2}>{ride.car}</LoopText>
       <CardFooter>
         <TrustRow user={ride.driver} />
         <MetaLine icon={<Users size={14} color={colors.inkSoft} />}>
@@ -61,9 +116,6 @@ export function RideCard({
         </MetaLine>
         <MetaLine icon={<Car size={14} color={colors.inkSoft} />}>
           {ride.driver.name}
-        </MetaLine>
-        <MetaLine icon={<MapPin size={14} color={colors.inkSoft} />}>
-          Waterloo pickup
         </MetaLine>
         <LoopButton
           variant="rides"

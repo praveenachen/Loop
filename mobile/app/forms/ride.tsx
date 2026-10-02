@@ -27,8 +27,8 @@ export default function CreateRide() {
       title={mode === "offer" ? "Offer a Trip" : "Request a Trip"}
       description={
         mode === "offer"
-          ? "Share your route and available seats with verified students."
-          : "Post the route and time you need a ride."
+          ? "Share your route and available seats."
+          : "Post the route and time you need."
       }
       fields={fields}
       initialValues={{ pricePerSeat: "0", seats: "1" }}

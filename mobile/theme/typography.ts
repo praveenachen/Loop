@@ -10,20 +10,20 @@ export const fonts = {
 export const typography = {
   display: {
     fontFamily: fonts.display,
-    fontSize: 32,
-    lineHeight: 38,
-    color: colors.ink,
-  },
-  pageHeading: {
-    fontFamily: fonts.display,
     fontSize: 30,
     lineHeight: 36,
     color: colors.ink,
   },
+  pageHeading: {
+    fontFamily: fonts.display,
+    fontSize: 28,
+    lineHeight: 34,
+    color: colors.ink,
+  },
   sectionHeading: {
     fontFamily: fonts.display,
-    fontSize: 22,
-    lineHeight: 28,
+    fontSize: 20,
+    lineHeight: 26,
     color: colors.ink,
   },
   cardHeading: {
@@ -56,6 +56,38 @@ export const typography = {
     fontFamily: fonts.heavy,
     fontSize: 14,
     lineHeight: 20,
+    color: colors.inkSoft,
+  },
+  cardTitle: {
+    fontFamily: fonts.display,
+    fontSize: 15,
+    lineHeight: 20,
+    color: colors.ink,
+  },
+  cardBody: {
+    fontFamily: fonts.body,
+    fontSize: 12.5,
+    lineHeight: 17,
+    color: colors.inkSoft,
+  },
+  meta: {
+    fontFamily: fonts.semibold,
+    fontSize: 11.5,
+    lineHeight: 15,
+    color: colors.inkSoft,
+  },
+  caption: {
+    fontFamily: fonts.semibold,
+    fontSize: 12,
+    lineHeight: 18,
+    color: colors.inkSoft,
+  },
+  eyebrow: {
+    fontFamily: fonts.heavy,
+    fontSize: 10,
+    lineHeight: 15,
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
     color: colors.inkSoft,
   },
   chip: {

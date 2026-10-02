@@ -3,52 +3,64 @@ import { View } from "react-native";
 import { router } from "expo-router";
 import type { Conversation } from "../lib/types";
 import { colors, radius } from "../theme";
-import { LoopCard } from "./LoopCard";
 import { LoopText } from "./LoopText";
 import { LoopButton } from "./LoopButton";
-import { CardFooter, TrustRow, Avatar } from "./CardParts";
+import { CompactCard } from "./CompactCard";
+function UnreadBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <View
+      accessibilityLabel={`${count} unread messages`}
+      style={{
+        alignSelf: "flex-start",
+        borderRadius: radius.pill,
+        backgroundColor: colors.accent,
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+      }}
+    >
+      <LoopText variant="meta" style={{ color: colors.white }}>
+        {count} new
+      </LoopText>
+    </View>
+  );
+}
 export function ChatPreviewCard({ chat }: { chat: Conversation }) {
   return (
-    <LoopCard style={{ padding: 16 }}>
-      <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
-        <Avatar user={chat.with} />
-        <View style={{ flex: 1, gap: 2 }}>
-          <LoopText variant="pill" style={{ color: colors.ink }}>
-            {chat.with.name}
-          </LoopText>
-          <LoopText variant="chip">{chat.context}</LoopText>
-          <LoopText variant="chip">{chat.detail}</LoopText>
-        </View>
-        <LoopText variant="chip">{chat.time}</LoopText>
-      </View>
-      <LoopText variant="smallBody">{chat.lastMessage}</LoopText>
-      <CardFooter>
-        <TrustRow user={chat.with} soft />
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-          {chat.unread > 0 ? (
-            <View
-              accessibilityLabel={`${chat.unread} unread messages`}
-              style={{
-                borderRadius: radius.pill,
-                backgroundColor: colors.accent,
-                padding: 6,
-              }}
+    <CompactCard
+      tone="marketplace"
+      rightWidth={84}
+      left={
+        <>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <LoopText
+              variant="cardHeading"
+              numberOfLines={1}
+              style={{ flexShrink: 1 }}
             >
-              <LoopText variant="chip" style={{ color: colors.white }}>
-                {chat.unread}
-              </LoopText>
-            </View>
-          ) : null}
-          <LoopButton
-            icon={<MessageCircle size={14} color={colors.ink} />}
-            variant="secondary"
-            accessibilityLabel={`Open conversation with ${chat.with.name}`}
-            onPress={() => router.push(`/messages/${chat.id}`)}
-          >
-            Open
-          </LoopButton>
-        </View>
-      </CardFooter>
-    </LoopCard>
+              {chat.with.name}
+            </LoopText>
+            <UnreadBadge count={chat.unread} />
+          </View>
+          <LoopText variant="eyebrow" numberOfLines={1}>
+            {chat.context} · {chat.time}
+          </LoopText>
+          <LoopText variant="cardBody" numberOfLines={2}>
+            {chat.lastMessage}
+          </LoopText>
+        </>
+      }
+      right={
+        <LoopButton
+          compact
+          icon={<MessageCircle size={13} color={colors.white} />}
+          variant="marketplace"
+          accessibilityLabel={`Open conversation with ${chat.with.name}`}
+          onPress={() => router.push(`/messages/${chat.id}`)}
+        >
+          Open
+        </LoopButton>
+      }
+    />
   );
 }

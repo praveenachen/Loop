@@ -19,6 +19,7 @@ export function LoopCard({
       style={[
         shadows.card,
         {
+          maxWidth: "100%",
           backgroundColor: colors.white,
           borderColor: toneColors[tone].border,
           borderWidth: 1,

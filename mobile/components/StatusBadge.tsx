@@ -4,10 +4,10 @@ import { colors, radius } from "../theme";
 import { LoopText } from "./LoopText";
 const labels = {
   available: "Available",
-  pending: "Pending",
+  pending: "Reserved",
   sold: "Sold",
   "seats-open": "Seats Open",
-  waitlist: "Waitlist",
+  waitlist: "Ride Full",
   trusted: "Trusted",
 };
 export function StatusBadge({
@@ -47,6 +47,25 @@ export function StatusBadge({
     >
       <LoopText variant="chip" style={{ color }}>
         {labels[status]}
+      </LoopText>
+    </View>
+  );
+}
+
+// Marks a post where someone is looking for an item rather than selling one.
+export function WantedBadge() {
+  return (
+    <View
+      style={{
+        alignSelf: "flex-start",
+        borderRadius: radius.pill,
+        backgroundColor: colors.accent,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+      }}
+    >
+      <LoopText variant="chip" style={{ color: colors.white }}>
+        Wanted
       </LoopText>
     </View>
   );

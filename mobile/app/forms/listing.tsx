@@ -7,7 +7,7 @@ export default function CreateListing() {
   return (
     <LoopForm
       title="Create Marketplace Listing"
-      description="Publish an item or request to the verified student marketplace."
+      description={'Selling something? Use a category like Electronics. Looking for something? Set the category to "Requests" so it shows as Wanted.'}
       fields={listingFields}
       initialValues={{ price: "0" }}
       submitLabel="Publish Listing"

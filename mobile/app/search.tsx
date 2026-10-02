@@ -8,16 +8,17 @@ import {
   EmptyState,
   LoopLoadState,
 } from "../components";
-import { LoopInput } from "../components/LoopInput";
+import { LoopSearchBar } from "../components/LoopSearchBar";
 import { useLoop } from "../lib/AppProvider";
 import { request } from "../lib/api";
 import type { MarketplaceListing, RideListing, StudyGroup } from "../lib/types";
+import { isWanted, listingTitle } from "../lib/listing";
 import { LoadingState, ErrorState } from "../components";
 export default function SearchScreen() {
   const params = useLocalSearchParams<{ q?: string }>();
   const [query, setQuery] = useState(params.q ?? "");
   const [tab, setTab] = useState("All results");
-  const { data, loading, error } = useLoop();
+  const { loading, error } = useLoop();
   const [results, setResults] = useState<{ listings: MarketplaceListing[]; rides: RideListing[]; groups: StudyGroup[] }>({ listings: [], rides: [], groups: [] });
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
@@ -38,8 +39,10 @@ export default function SearchScreen() {
       tone: "marketplace" as const,
       items: results.listings.map((l) => ({
         id: l.id,
-        title: l.title,
-        subtitle: `${l.category} - ${l.location} - $${l.price}`,
+        title: listingTitle(l),
+        subtitle: isWanted(l)
+          ? `Wanted - ${l.location} - up to $${l.price}`
+          : `For sale - ${l.category} - ${l.location} - $${l.price}`,
         href: `/listings/${l.id}`,
       })),
     },
@@ -69,29 +72,24 @@ export default function SearchScreen() {
     <LoopPageFrame
       tab={false}
       title="Search Loop"
-      subtitle={
-        query.trim()
-          ? `Results for "${query.trim()}" across the verified student network.`
-          : "Search marketplace listings, rides, and study groups from the header."
-      }
+      subtitle="Search listings, rides, and study groups."
       goose="reader"
       tabs={["All results", "Marketplace", "Rides", "Study Groups"]}
       activeTab={tab}
       onTabChange={setTab}
     >
-      <LoopInput
-        label="Search Loop"
+      <LoopSearchBar
         placeholder="Search listings, rides, study groups..."
         value={query}
-        onChangeText={setQuery}
-        returnKeyType="search"
-        autoCapitalize="none"
+        onChange={setQuery}
       />
-      <LoopText variant="pill">
-        {loading || searching
-          ? "Searching..."
-          : `${total} result${total === 1 ? "" : "s"} found`}
-      </LoopText>
+      {query.trim() ? (
+        <LoopText variant="chip">
+          {loading || searching
+            ? "Searching..."
+            : `${total} result${total === 1 ? "" : "s"}`}
+        </LoopText>
+      ) : null}
       <LoopLoadState />
       {searching ? <LoadingState label="Searching Loop…" /> : searchError ? <ErrorState message={searchError} onRetry={() => setRetry(v => v + 1)} /> : null}
       {!loading && !error && !searching && !searchError ? (
@@ -113,7 +111,10 @@ export default function SearchScreen() {
                     accessibilityRole="button"
                     accessibilityLabel={`Open result: ${i.title}`}
                     onPress={() => router.push(i.href)}
-                    style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+                    style={({ pressed }) => ({
+                      opacity: pressed ? 0.72 : 1,
+                      transform: [{ scale: pressed ? 0.99 : 1 }],
+                    })}
                   >
                     <LoopCard
                       tone={s.tone}

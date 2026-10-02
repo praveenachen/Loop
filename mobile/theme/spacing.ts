@@ -3,7 +3,7 @@ export const spacing = {
   compact: 8,
   control: 12,
   base: 16,
-  section: 20,
+  section: 16,
   roomy: 24,
   desktopSection: 32,
   page: 40,

@@ -8,6 +8,8 @@ import { View } from "react-native";
 export function LoopPageFrame({
   children,
   tab = true,
+  vivid = false,
+  bare = false,
   tabs,
   activeTab,
   onTabChange,
@@ -21,9 +23,11 @@ export function LoopPageFrame({
 }: MobileHeroProps & {
   children: ReactNode;
   tab?: boolean;
-  tabs: readonly string[];
-  activeTab: string;
-  onTabChange: (tab: string) => void;
+  vivid?: boolean;
+  bare?: boolean;
+  tabs?: readonly string[];
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
   filters?: readonly string[];
   activeFilter?: string;
   onFilterChange?: (filter: string) => void;
@@ -32,9 +36,11 @@ export function LoopPageFrame({
   onSearchChange?: (value: string) => void;
 }) {
   return (
-    <LoopScreen tab={tab}>
+    <LoopScreen tab={tab} vivid={vivid} bare={bare} tone={hero.tone}>
       <MobileHero {...hero} />
-      <LoopTabs items={tabs} active={activeTab} onChange={onTabChange} />
+      {tabs && activeTab !== undefined && onTabChange ? (
+        <LoopTabs items={tabs} active={activeTab} onChange={onTabChange} />
+      ) : null}
       {onSearchChange ? (
         <LoopSearchBar
           value={searchValue ?? ""}
@@ -48,7 +54,7 @@ export function LoopPageFrame({
           onChange={onFilterChange}
         />
       ) : null}
-      <View style={{ paddingHorizontal: 2, gap: 20 }}>
+      <View style={{ width: "100%", maxWidth: "100%", paddingHorizontal: 2, gap: 16 }}>
         {children}
       </View>
     </LoopScreen>

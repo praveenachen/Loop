@@ -16,7 +16,7 @@ export function SectionHeader({
         flexDirection: "row",
         flexWrap: "wrap",
         gap: 12,
-        alignItems: "flex-end",
+        alignItems: "flex-start",
         justifyContent: "space-between",
       }}
     >
@@ -26,7 +26,7 @@ export function SectionHeader({
         </LoopText>
         {subtitle ? <LoopText variant="smallBody">{subtitle}</LoopText> : null}
       </View>
-      {action}
+      {action ? <View style={{ minHeight: 26, justifyContent: "center" }}>{action}</View> : null}
     </View>
   );
 }

@@ -20,6 +20,7 @@ export function ActionCard({
   cta,
   onPress,
   goose,
+  compact = false,
 }: {
   title: string;
   description: string;
@@ -28,7 +29,61 @@ export function ActionCard({
   cta?: string;
   onPress: () => void;
   goose?: Goose;
+  compact?: boolean;
 }) {
+  if (compact) {
+    return (
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`${title} ${description}`}
+        style={({ pressed }) => [
+          shadows.card,
+          {
+            flex: 1,
+            borderRadius: radius.card,
+            backgroundColor: colors.white,
+            opacity: pressed ? 0.8 : 1,
+            transform: [{ scale: pressed ? 0.97 : 1 }],
+          },
+        ]}
+      >
+        <LinearGradient
+          colors={[colors.white, colors.white]}
+          style={{
+            flex: 1,
+            paddingVertical: 10,
+            paddingHorizontal: 6,
+            borderRadius: radius.card,
+            borderWidth: 1,
+            borderColor: toneColors[tone].border,
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          <View
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: radius.pill,
+              backgroundColor: tone === "rides" ? "hsla(47, 92%, 66%, 0.4)" : toneColors[tone].fill,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {goose ? <GooseImage goose={goose} size={44} decorative /> : icon}
+          </View>
+          <LoopText
+            variant="pill"
+            numberOfLines={2}
+            style={{ color: colors.ink, textAlign: "center", fontSize: 13, lineHeight: 17 }}
+          >
+            {title}
+          </LoopText>
+        </LinearGradient>
+      </Pressable>
+    );
+  }
   return (
     <Pressable
       onPress={onPress}
@@ -40,6 +95,7 @@ export function ActionCard({
           borderRadius: goose ? radius.feature : radius.card,
           backgroundColor: colors.white,
           opacity: pressed ? 0.8 : 1,
+          transform: [{ scale: pressed ? 0.985 : 1 }],
         },
       ]}
     >
@@ -55,11 +111,11 @@ export function ActionCard({
               ]
         }
         style={{
-          padding: goose ? 16 : 20,
+          padding: 16,
           borderRadius: goose ? radius.feature : radius.card,
           borderWidth: 1,
           borderColor: goose ? colors.stroke : toneColors[tone].border,
-          gap: 12,
+          gap: 10,
         }}
       >
         {goose ? (
@@ -81,16 +137,16 @@ export function ActionCard({
         ) : (
           icon
         )}
-        <LoopText variant={goose ? "sectionHeading" : "cardHeading"}>
+        <LoopText variant={goose ? "sectionHeading" : "cardHeading"} numberOfLines={2}>
           {title}
         </LoopText>
-        <LoopText variant="smallBody">{description}</LoopText>
+        <LoopText variant="smallBody" numberOfLines={2}>{description}</LoopText>
         {goose ? (
           <View
             style={{
               alignSelf: "center",
-              width: 160,
-              height: 160,
+              width: 144,
+              height: 144,
               borderRadius: radius.pill,
               backgroundColor:
                 tone === "rides"
@@ -100,7 +156,7 @@ export function ActionCard({
               justifyContent: "center",
             }}
           >
-            <GooseImage goose={goose} size={112} decorative />
+            <GooseImage goose={goose} size={100} decorative />
           </View>
         ) : null}
         {cta ? (

@@ -1,4 +1,5 @@
 import type { Activity, Conversation, MarketplaceListing, Review, RideListing, StudyGroup, User, Message } from './types';
+import { isWanted, listingTitle } from "./listing";
 export interface AppData { user: User; listings: MarketplaceListing[]; rides: RideListing[]; groups: StudyGroup[]; chats: Conversation[]; reviews: Review[]; activity: Activity[] }
 export class ApiError extends Error { constructor(message: string, public status = 0) { super(message); } }
 let token: string | null = null;
@@ -30,7 +31,7 @@ export const mobileApi = {
       request<{ user: User; reviews: Review[] }>('/api/profile/me'), request<MarketplaceListing[]>('/api/marketplace/listings'), request<RideListing[]>('/api/rides'), request<StudyGroup[]>('/api/study-groups'), request<Conversation[]>('/api/messages/previews'), request<{ user: User }>('/api/dashboard')
     ]);
     const activity: Activity[] = [
-      ...listings.filter(l => l.isOwner).map(l => ({ id: l.id, entityId: l.id, vertical: 'marketplace' as const, title: l.title, detail: `${l.category} · ${l.location}` })),
+      ...listings.filter(l => l.isOwner).map(l => ({ id: l.id, entityId: l.id, vertical: 'marketplace' as const, title: listingTitle(l), detail: isWanted(l) ? `Wanted · ${l.location}` : `${l.category} · ${l.location}` })),
       ...rides.filter(r => r.isOwner || r.requestedByCurrentUser).map(r => ({ id: r.id, entityId: r.id, vertical: 'rides' as const, title: r.route, detail: r.departure })),
       ...groups.filter(g => g.isOwner || g.joinedByCurrentUser).map(g => ({ id: g.id, entityId: g.id, vertical: 'study' as const, title: `${g.course}: ${g.title}`, detail: g.schedule }))
     ];

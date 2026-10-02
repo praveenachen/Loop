@@ -1,49 +1,42 @@
 import { useState } from "react";
+import { View } from "react-native";
 import {
   LoopPageFrame,
-  LoopText,
-  LoopCard,
   ChatPreviewCard,
   EmptyState,
   LoopLoadState,
+  LoopPill,
+  SectionDropdown,
 } from "../../components";
 import { useLoop } from "../../lib/AppProvider";
-import { colors } from "../../theme";
+const TYPES = ["All types", "Marketplace", "Rides", "Study Groups"] as const;
+const CONTEXT: Record<string, string> = {
+  Marketplace: "Marketplace",
+  Rides: "Ride Coordination",
+  "Study Groups": "Study Group",
+};
 export default function MessagesScreen() {
   const { data, loading, error } = useLoop();
-  const [tab, setTab] = useState("Inbox");
-  const [filter, setFilter] = useState("All messages");
+  const [view, setView] = useState<"Inbox" | "Unread">("Inbox");
+  const [type, setType] = useState<string>("All types");
   const visible = data.chats.filter(
     (c) =>
-      (tab === "Inbox" ||
-        c.context ===
-          (tab === "Rides"
-            ? "Ride Coordination"
-            : tab === "Study Groups"
-              ? "Study Group"
-              : tab)) &&
-      (filter !== "Unread" || c.unread > 0),
+      (type === "All types" || c.context === CONTEXT[type]) &&
+      (view !== "Unread" || c.unread > 0),
   );
   return (
     <LoopPageFrame
       title="Messages"
-      subtitle="All pickups, rides, and study coordination stay in-app to keep trust and accountability visible."
+      subtitle="Keep marketplace, ride, and study coordination in one place."
       goose="backpack"
-      tabs={["Inbox", "Marketplace", "Rides", "Study Groups"]}
-      activeTab={tab}
-      onTabChange={setTab}
-      filters={["All messages", "Unread"]}
-      activeFilter={filter}
-      onFilterChange={setFilter}
     >
-      <LoopCard style={{ padding: 16, backgroundColor: colors.surfaceSoft }}>
-        <LoopText variant="pill" style={{ color: colors.ink }}>
-          Student-only inbox
-        </LoopText>
-        <LoopText variant="smallBody">
-          Only verified users can start or continue conversations in Loop.
-        </LoopText>
-      </LoopCard>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <LoopPill compact label="Inbox" selected={view === "Inbox"} onPress={() => setView("Inbox")} />
+        <LoopPill compact label="Unread" selected={view === "Unread"} onPress={() => setView("Unread")} />
+        <View style={{ flex: 1, alignItems: "flex-end" }}>
+          <SectionDropdown options={TYPES} value={type} onChange={setType} />
+        </View>
+      </View>
       <LoopLoadState />
       {!loading && !error ? (
         visible.length ? (
@@ -51,7 +44,7 @@ export default function MessagesScreen() {
         ) : (
           <EmptyState
             title="No matching conversations"
-            message="Try another inbox filter or contact a marketplace seller."
+            message="Try another filter or message someone on the marketplace."
           />
         )
       ) : null}

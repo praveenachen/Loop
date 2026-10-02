@@ -9,6 +9,7 @@ import {
   LoopLoadState,
 } from "../../components";
 import { useLoop } from "../../lib/AppProvider";
+import { isWanted, listingTitle } from "../../lib/listing";
 export default function Detail() {
   const { id, created } = useLocalSearchParams<{
     id: string;
@@ -22,8 +23,8 @@ export default function Detail() {
       {!loading && !error ? item ? (
         <>
           <MobileHero
-            title="Marketplace"
-            subtitle={item.title}
+            title={isWanted(item) ? "Wanted" : "For Sale"}
+            subtitle={listingTitle(item)}
             goose="trophy"
             tone="marketplace"
           />

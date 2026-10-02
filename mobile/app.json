@@ -13,7 +13,13 @@
       "predictiveBackGestureEnabled": true,
       "softwareKeyboardLayoutMode": "resize"
     },
-    "plugins": ["expo-router", "expo-font", "expo-secure-store"],
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-secure-store",
+      "expo-splash-screen",
+      "expo-status-bar"
+    ],
     "web": {
       "bundler": "metro",
       "output": "single"

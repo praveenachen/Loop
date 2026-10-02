@@ -3,15 +3,11 @@ import { View } from "react-native";
 import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import {
-  ShieldCheck,
-  MessageCircle,
-  Star,
   Sparkles,
 } from "lucide-react-native";
 import { FormScreen } from "../../components/FormScreen";
 import { LoopInput } from "../../components/LoopInput";
 import {
-  LoopCard,
   LoopText,
   GooseImage,
   LoopButton,
@@ -34,115 +30,15 @@ export default function SignInScreen() {
     finally { lock.current = false; setSubmitting(false); }
   }
   return (
-    <FormScreen>
+    <FormScreen vivid center>
       <LinearGradient
-        colors={[
-          "hsla(151, 63%, 40%, 0.2)",
-          "hsla(47, 92%, 66%, 0.25)",
-          "hsla(335, 75%, 58%, 0.2)",
-        ]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={{
-          padding: 24,
-          borderRadius: 24,
-          borderWidth: 1,
-          borderColor: colors.stroke,
-          gap: 20,
-        }}
-      >
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          <GooseImage goose="logoTransparent" size={48} />
-          <LoopText variant="display">Loop</LoopText>
-        </View>
-        <LoopText variant="display">
-          Your campus marketplace, rides, and study circle in one place.
-        </LoopText>
-        <LoopText>
-          Sign in with your verified Waterloo account and jump back into your
-          dashboard.
-        </LoopText>
-        <LoopText variant="label">Why Loop</LoopText>
-        {[
-          {
-            label: "UW Verified Only",
-            Icon: ShieldCheck,
-            fill: "#7ef7c2",
-            color: "#127f56",
-          },
-          {
-            label: "In-App Messaging",
-            Icon: MessageCircle,
-            fill: "#8fd1ff",
-            color: "#0c6fb7",
-          },
-          {
-            label: "Ratings + History",
-            Icon: Star,
-            fill: "#ffe68a",
-            color: "#8e6800",
-          },
-        ].map(({ label, Icon, fill, color }) => (
-          <LoopCard key={label} style={{ padding: 16 }}>
-            <View
-              style={{
-                height: 48,
-                width: 48,
-                borderRadius: 16,
-                backgroundColor: fill,
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              <Icon size={24} color={color} />
-            </View>
-            <LoopText variant="pill" style={{ color: colors.ink }}>
-              {label}
-            </LoopText>
-          </LoopCard>
-        ))}
-        <View style={{ gap: 8, flexDirection: "row", flexWrap: "wrap" }}>
-          {[
-            {
-              label: "Marketplace",
-              fill: "hsla(151, 63%, 40%, 0.2)",
-              color: colors.marketplace,
-            },
-            {
-              label: "Rides",
-              fill: "hsla(47, 92%, 66%, 0.4)",
-              color: colors.ink,
-            },
-            {
-              label: "Study-Pair",
-              fill: "hsla(335, 75%, 58%, 0.2)",
-              color: colors.study,
-            },
-          ].map((item) => (
-            <View
-              key={item.label}
-              style={{
-                borderRadius: radius.pill,
-                backgroundColor: item.fill,
-                paddingHorizontal: 16,
-                paddingVertical: 8,
-              }}
-            >
-              <LoopText variant="pill" style={{ color: item.color }}>
-                {item.label}
-              </LoopText>
-            </View>
-          ))}
-        </View>
-      </LinearGradient>
-      <LinearGradient
-        colors={[colors.white, colors.surfaceSoft]}
+        colors={["hsla(0, 0%, 100%, 0.94)", "hsla(45, 30%, 97%, 0.92)"]}
         style={[
           shadows.lift,
           {
             padding: 24,
-            gap: 12,
-            borderRadius: 24,
+            gap: 14,
+            borderRadius: 28,
             borderWidth: 1,
             borderColor: colors.stroke,
           },
@@ -163,22 +59,20 @@ export default function SignInScreen() {
               alignItems: "center",
               gap: 8,
               borderWidth: 1,
-              borderColor: colors.stroke,
+              borderColor: colors.accent,
               borderRadius: radius.pill,
               paddingHorizontal: 12,
               paddingVertical: 4,
-              backgroundColor: colors.white,
+              backgroundColor: colors.accent,
             }}
           >
-            <Sparkles size={14} color={colors.inkSoft} />
-            <LoopText variant="label">Student Access</LoopText>
+            <Sparkles size={14} color={colors.white} />
+            <LoopText variant="label" style={{ color: colors.white }}>Student Access</LoopText>
           </View>
-          <GooseImage goose="backpack" size={56} />
+          <GooseImage goose="backpack" size={72} />
         </View>
         <LoopText variant="display">Sign in to Loop</LoopText>
-        <LoopText variant="smallBody">
-          Use your @uwaterloo.ca credentials to enter the verified network.
-        </LoopText>
+        <LoopText variant="smallBody">Use your @uwaterloo.ca account.</LoopText>
         <LoopInput
           style={{ borderRadius: 20, paddingHorizontal: 16 }}
           label="Email"
@@ -203,9 +97,6 @@ export default function SignInScreen() {
         />
         {error ? <FeedbackBanner tone="error" message={error} /> : null}
         <LoopButton disabled={submitting} onPress={submit}>{submitting ? "Signing in…" : "Sign In"}</LoopButton>
-        <LoopText variant="chip">
-          Use your Loop student account.
-        </LoopText>
         <LoopText variant="chip">
           Your session is stored securely on this device.
         </LoopText>

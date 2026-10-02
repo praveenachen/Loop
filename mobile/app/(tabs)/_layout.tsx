@@ -1,13 +1,11 @@
-import { Pressable, View, Text } from "react-native";
-import { Tabs, router } from "expo-router";
+import { View } from "react-native";
+import { Tabs } from "expo-router";
 import {
   Home,
   ShoppingBag,
   Car,
   BookOpen,
   MessageCircle,
-  UserRound,
-  Search,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GooseImage } from "../../components/GooseImage";
@@ -17,62 +15,7 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerStyle: { backgroundColor: colors.surface },
-        headerShadowVisible: false,
-        headerTitle: () => (
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <GooseImage goose="logo" size={36} decorative />
-            <Text
-              style={{
-                fontFamily: fonts.display,
-                fontSize: 28,
-                color: colors.ink,
-              }}
-            >
-              Loop
-            </Text>
-          </View>
-        ),
-        headerRight: () => (
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Search Loop"
-              onPress={() => router.push("/search")}
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 16,
-                borderWidth: 1,
-                borderColor: colors.stroke,
-                backgroundColor: colors.white,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Search size={20} color={colors.ink} />
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Open profile"
-              onPress={() => router.push("/profile")}
-              style={({ pressed }) => ({
-                marginRight: 16,
-                height: 44,
-                width: 44,
-                borderRadius: radius.button,
-                borderWidth: 1,
-                borderColor: colors.stroke,
-                backgroundColor: colors.white,
-                alignItems: "center",
-                justifyContent: "center",
-                opacity: pressed ? 0.7 : 1,
-              })}
-            >
-              <UserRound size={20} color={colors.ink} />
-            </Pressable>
-          </View>
-        ),
+        headerShown: false,
         tabBarActiveTintColor: colors.ink,
         tabBarInactiveTintColor: colors.inkSoft,
         tabBarStyle: {

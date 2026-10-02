@@ -1,26 +1,30 @@
 import { Plus } from "lucide-react-native";
 import { colors } from "../../theme";
 import { useState } from "react";
+import { View } from "react-native";
 import { router } from "expo-router";
 import {
   LoopPageFrame,
-  LoopText,
   LoopButton,
   ListingCard,
   EmptyState,
   LoopLoadState,
-  LoopPill,
+  SectionHeader,
+  SectionDropdown,
 } from "../../components";
 import { useLoop } from "../../lib/AppProvider";
+import { isWanted } from "../../lib/listing";
+const TABS = ["See All", "Your Listings", "Your Requests", "Your Purchases"] as const;
 export default function MarketplaceScreen() {
   const { data, loading, error } = useLoop();
-  const [tab, setTab] = useState("Browse");
+  const [tab, setTab] = useState("See All");
   const [searchQuery, setSearchQuery] = useState("");
   const query = searchQuery.trim().toLowerCase();
   const visible = data.listings.filter(
     (l) =>
-      (tab !== "Sell" || l.isOwner) &&
-      (tab !== "Requests" || l.category.toLowerCase() === "requests") &&
+      (tab !== "Your Listings" || (l.isOwner && !isWanted(l))) &&
+      (tab !== "Your Requests" || (l.isOwner && isWanted(l))) &&
+      (tab !== "Your Purchases" || (l.contactedByCurrentUser && !isWanted(l))) &&
       (!query ||
         [l.title, l.description, l.category, l.location, l.seller.name].some(
           (value) => value.toLowerCase().includes(query),
@@ -29,16 +33,11 @@ export default function MarketplaceScreen() {
   return (
     <LoopPageFrame
       title="Marketplace"
-      subtitle="Browse campus listings with clear verification, price transparency, and quick in-app coordination."
+      subtitle="Buy, sell, and coordinate with verified Waterloo students."
       goose="trophy"
       tone="marketplace"
-      tabs={["Browse", "Sell", "Requests"]}
-      activeTab={tab}
-      onTabChange={(t) => {
-        setTab(t);
-      }}
       searchValue={searchQuery}
-      searchPlaceholder="Search listings, categories, or sellers"
+      searchPlaceholder="Search items for sale or wanted posts"
       onSearchChange={setSearchQuery}
       actions={
         <LoopButton
@@ -50,23 +49,21 @@ export default function MarketplaceScreen() {
         </LoopButton>
       }
     >
-      <LoopPill
-        label={`${visible.length} ${tab === "Sell" ? "your" : "active"} listings`}
+      <SectionHeader
+        title={tab === "See All" ? "Latest Listings" : tab}
+        subtitle={`${visible.length} ${tab === "Your Listings" || tab === "Your Requests" ? "posted" : tab === "Your Purchases" ? "requested" : "active"}`}
+        action={<SectionDropdown options={TABS} value={tab} onChange={setTab} />}
       />
-      <LoopText variant="smallBody">
-        Smart sorting by trust + relevance
-      </LoopText>
-      <LoopText variant="sectionHeading" accessibilityRole="header">
-        Latest Campus Listings
-      </LoopText>
       <LoopLoadState />
       {!loading && !error ? (
         visible.length ? (
-          visible.map((l) => <ListingCard key={l.id} listing={l} />)
+          <View style={{ gap: 8 }}>
+            {visible.map((l) => <ListingCard key={l.id} listing={l} />)}
+          </View>
         ) : (
           <EmptyState
             title="No matching listings"
-            message="Try another category or publish a new listing."
+            message="Try another search or publish a new listing."
           />
         )
       ) : null}

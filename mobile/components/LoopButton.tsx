@@ -8,12 +8,14 @@ export function LoopButton({
   icon,
   variant = "primary",
   disabled,
+  compact = false,
   style,
   ...props
 }: Omit<PressableProps, "children"> & {
   children: string;
   variant?: Variant;
   icon?: ReactNode;
+  compact?: boolean;
 }) {
   const backgroundColor =
     variant === "secondary"
@@ -31,25 +33,36 @@ export function LoopButton({
       accessibilityState={{ disabled: !!disabled }}
       style={(state) => [
         {
-          minHeight: 44,
+          minHeight: compact ? 34 : 44,
+          ...(compact ? { height: 34 } : null),
           borderRadius: radius.pill,
           borderWidth: 1,
           borderColor:
             variant === "secondary" ? colors.stroke : backgroundColor,
           backgroundColor,
-          paddingHorizontal: spacing.base,
-          paddingVertical: spacing.control,
+          paddingHorizontal: compact ? 6 : spacing.base,
+          paddingVertical: compact ? 4 : spacing.control,
           flexDirection: "row",
           gap: 8,
           alignItems: "center",
           justifyContent: "center",
           opacity: disabled ? 0.5 : state.pressed ? 0.75 : 1,
+          transform: [{ scale: state.pressed && !disabled ? 0.98 : 1 }],
         },
         typeof style === "function" ? style(state) : style,
       ]}
     >
       {icon}
-      <LoopText style={[typography.pill, { color }]}>{children}</LoopText>
+      <LoopText
+        numberOfLines={1}
+        style={[
+          typography.pill,
+          compact && { fontSize: 12, lineHeight: 15 },
+          { color, flexShrink: 1, textAlign: "center" },
+        ]}
+      >
+        {children}
+      </LoopText>
     </Pressable>
   );
 }

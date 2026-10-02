@@ -21,6 +21,7 @@ export function BackButton({ fallback = "/" }: { fallback?: string }) {
         alignItems: "center",
         justifyContent: "center",
         opacity: pressed ? 0.7 : 1,
+        transform: [{ scale: pressed ? 0.94 : 1 }],
       })}
     >
       <ChevronLeft size={20} color={colors.ink} />

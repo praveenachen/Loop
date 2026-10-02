@@ -27,7 +27,7 @@ export function TrustRow({
   soft?: boolean;
 }) {
   return (
-    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, maxWidth: "100%" }}>
       <RatingChip
         rating={user.rating}
         reviews={soft ? undefined : user.reviews}
@@ -45,7 +45,7 @@ export function MetaLine({
   children: ReactNode;
 }) {
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 6, maxWidth: "100%" }}>
       {icon}
       <LoopText variant="chip" style={{ flexShrink: 1 }}>
         {children}

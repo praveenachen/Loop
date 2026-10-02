@@ -1,12 +1,12 @@
 import { View } from "react-native";
-import { Activity, CarFront, Handshake, Users } from "lucide-react-native";
+import { CarFront, Handshake, Users } from "lucide-react-native";
 import type { User } from "../lib/types";
 import { colors, radius } from "../theme";
 import { LoopCard } from "./LoopCard";
 import { LoopText } from "./LoopText";
 import { VerificationBadge } from "./VerificationBadge";
 import { RatingChip } from "./RatingChip";
-import { Avatar, MetaLine } from "./CardParts";
+import { Avatar } from "./CardParts";
 export function ProfileSummaryCard({ user }: { user: User }) {
   return (
     <LoopCard>
@@ -18,23 +18,12 @@ export function ProfileSummaryCard({ user }: { user: User }) {
             {user.program} • {user.year}
           </LoopText>
         </View>
+      </View>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
         <VerificationBadge level={user.verification} />
-      </View>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
         <RatingChip rating={user.rating} reviews={user.reviews} />
-        <View
-          style={{
-            paddingHorizontal: 10,
-            paddingVertical: 4,
-            borderRadius: radius.pill,
-            backgroundColor: colors.trustSoft,
-          }}
-        >
-          <LoopText variant="chip" style={{ color: colors.trust }}>
-            Verified Identity
-          </LoopText>
-        </View>
       </View>
+      <View style={{ flexDirection: "row", gap: 10 }}>
       {[
         {
           label: "Transactions",
@@ -44,26 +33,29 @@ export function ProfileSummaryCard({ user }: { user: User }) {
         { label: "Rides Given", value: user.ridesGiven, Icon: CarFront },
         { label: "Groups Hosted", value: user.groupsHosted, Icon: Users },
       ].map(({ label, value, Icon }) => (
-        <LoopCard
+        <View
           key={label}
           style={{
-            padding: 12,
+            flex: 1,
+            aspectRatio: 1,
+            padding: 8,
             borderRadius: radius.small,
             backgroundColor: colors.surfaceSoft,
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 4,
           }}
         >
-          <MetaLine icon={<Icon size={14} color={colors.inkSoft} />}>
-            {label}
-          </MetaLine>
-          <LoopText variant="pill" style={{ color: colors.ink }}>
+          <Icon size={18} color={colors.inkSoft} />
+          <LoopText variant="sectionHeading" style={{ color: colors.ink }}>
             {value}
           </LoopText>
-        </LoopCard>
+          <LoopText variant="meta" numberOfLines={2} style={{ textAlign: "center" }}>
+            {label}
+          </LoopText>
+        </View>
       ))}
-      <MetaLine icon={<Activity size={14} color={colors.accent} />}>
-        Campus identity and transaction history are always visible to other
-        members.
-      </MetaLine>
+      </View>
     </LoopCard>
   );
 }

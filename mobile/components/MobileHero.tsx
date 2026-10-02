@@ -1,13 +1,11 @@
 import type { ReactNode } from "react";
 import { View, useWindowDimensions } from "react-native";
-import { Sparkles } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   colors,
   radius,
   shadows,
   spacing,
-  toneColors,
   type Tone,
 } from "../theme";
 import { GooseImage, type Goose } from "./GooseImage";
@@ -18,16 +16,17 @@ export interface MobileHeroProps {
   goose: Goose;
   tone?: Tone;
   actions?: ReactNode;
+  large?: boolean;
 }
 export function MobileHero({
   title,
   subtitle,
   goose,
-  tone = "neutral",
   actions,
+  large = false,
 }: MobileHeroProps) {
   const { width, fontScale } = useWindowDimensions();
-  const stacked = width < 390 || fontScale > 1.2;
+  const compact = width < 390 || fontScale > 1.2;
   return (
     <View
       style={[
@@ -36,7 +35,7 @@ export function MobileHero({
       ]}
     >
       <LinearGradient
-        colors={[toneColors[tone].fill, colors.white]}
+        colors={[colors.white, colors.white]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={{
@@ -44,49 +43,44 @@ export function MobileHero({
           borderRadius: radius.panel,
           borderWidth: 1,
           borderColor: colors.stroke,
-          gap: spacing.base,
+          gap: spacing.control,
         }}
       >
         <View
           style={{
-            alignSelf: "flex-start",
             flexDirection: "row",
             alignItems: "center",
-            gap: 6,
-            paddingHorizontal: 12,
-            paddingVertical: 4,
-            backgroundColor: colors.white,
-            borderRadius: radius.pill,
-            borderWidth: 1,
-            borderColor: colors.stroke,
-          }}
-        >
-          <Sparkles size={14} color={colors.inkSoft} />
-          <LoopText variant="label">Student-first</LoopText>
-        </View>
-        <View
-          style={{
-            flexDirection: stacked ? "column" : "row",
-            alignItems: stacked ? "stretch" : "center",
             gap: spacing.control,
+            width: "100%",
           }}
         >
           <View
             style={{
-              flex: stacked ? undefined : 1,
+              flex: 1,
               minWidth: 0,
-              gap: spacing.compact,
+              gap: spacing.tiny,
             }}
           >
-            <LoopText variant="pageHeading" accessibilityRole="header">
+            <LoopText
+              variant="pageHeading"
+              accessibilityRole="header"
+              numberOfLines={2}
+              style={large ? { fontSize: 32, lineHeight: 38 } : undefined}
+            >
               {title}
             </LoopText>
-            <LoopText>{subtitle}</LoopText>
+            <LoopText
+              variant="smallBody"
+              numberOfLines={3}
+              style={large ? { fontSize: 15, lineHeight: 22 } : undefined}
+            >
+              {subtitle}
+            </LoopText>
           </View>
           <GooseImage
             goose={goose}
-            size={stacked ? 124 : 96}
-            style={stacked ? { alignSelf: "flex-end" } : undefined}
+            size={large ? (compact ? 96 : 116) : compact ? 64 : 78}
+            style={{ flexShrink: 0 }}
           />
         </View>
         {actions ? (

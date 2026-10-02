@@ -1,13 +1,13 @@
 import { useAction } from "../../lib/useAction";
 import { useEffect, useRef, useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from "react-native";
+import { ArrowUp } from "lucide-react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import {
-  LoopCard,
   LoopText,
   LoopButton,
   EmptyState,
@@ -16,11 +16,10 @@ import {
   FeedbackBanner,
   VerificationBadge,
 } from "../../components";
-import { LoopInput } from "../../components/LoopInput";
 import { Avatar } from "../../components/CardParts";
 import { useLoop } from "../../lib/AppProvider";
 import { BackButton } from "../../components/BackButton";
-import { colors, radius } from "../../theme";
+import { colors, fonts, radius } from "../../theme";
 export default function ThreadScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data, thread, mutate } = useLoop();
@@ -48,7 +47,7 @@ export default function ThreadScreen() {
     return (
       <SafeAreaView
         edges={["left", "right", "bottom"]}
-        style={{ flex: 1, backgroundColor: colors.surface, padding: 16 }}
+        style={{ flex: 1, width: "100%", overflow: "hidden", backgroundColor: colors.surface, padding: 16 }}
       >
         <EmptyState
           title="Conversation unavailable"
@@ -62,7 +61,7 @@ export default function ThreadScreen() {
   return (
     <SafeAreaView
       edges={["left", "right", "bottom"]}
-      style={{ flex: 1, backgroundColor: colors.surface }}
+      style={{ flex: 1, width: "100%", overflow: "hidden", backgroundColor: colors.surface }}
     >
       <Stack.Screen
         options={{
@@ -77,48 +76,73 @@ export default function ThreadScreen() {
       >
         <ScrollView
           ref={scroll}
+          style={{ flex: 1, width: "100%" }}
+          horizontal={false}
+          directionalLockEnabled
+          alwaysBounceHorizontal={false}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           onContentSizeChange={() =>
             scroll.current?.scrollToEnd({ animated: false })
           }
-          contentContainerStyle={{ padding: 16, gap: 16 }}
+          contentContainerStyle={{ width: "100%", maxWidth: "100%", padding: 16, gap: 12 }}
         >
-          <LoopCard style={{ padding: 16 }}>
-            <View style={{ flexDirection: "row", gap: 12 }}>
-              <Avatar user={chat.with} />
-              <View style={{ flex: 1, gap: 4 }}>
-                <LoopText variant="cardHeading">{chat.with.name}</LoopText>
-                <LoopText variant="smallBody">
-                  {chat.context} · {chat.detail}
-                </LoopText>
-                <VerificationBadge level={chat.with.verification} />
-              </View>
+          <View style={{ flexDirection: "row", gap: 12, alignItems: "center", maxWidth: "100%" }}>
+            <Avatar user={chat.with} />
+            <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
+              <LoopText variant="smallBody" numberOfLines={2}>
+                {chat.context} · {chat.detail}
+              </LoopText>
+              <VerificationBadge level={chat.with.verification} />
             </View>
-          </LoopCard>
-          <LoopText variant="chip" style={{ textAlign: "center" }}>
-            Student-only coordination
-          </LoopText>
+          </View>
           {loadingThread ? <LoadingState label="Loading messages…" /> : threadError ? <ErrorState message={threadError} onRetry={() => { setLoadingThread(true); void thread(id).then(() => setThreadError("")).catch(e => setThreadError(e.message)).finally(() => setLoadingThread(false)); }} /> : chat.messages.length ? (
-            chat.messages.map((m) => (
-              <LoopCard
-                key={m.id}
-                style={{
-                  padding: 16,
-                  backgroundColor:
-                    m.sender === "self" ? colors.surfaceSoft : colors.white,
-                  borderRadius: radius.card,
-                }}
-              >
-                <LoopText variant="chip">
-                  {m.sender === "self" ? data.user.name : chat.with.name} ·{" "}
-                  {m.time}
-                </LoopText>
-                <LoopText variant="smallBody" style={{ color: colors.ink }}>
-                  {m.body}
-                </LoopText>
-              </LoopCard>
-            ))
+            chat.messages.map((m, i) => {
+              const mine = m.sender === "self";
+              const next = chat.messages[i + 1];
+              const prev = chat.messages[i - 1];
+              const lastInGroup = !next || next.sender !== m.sender;
+              const firstInGroup = !prev || prev.sender !== m.sender;
+              return (
+                <View
+                  key={m.id}
+                  style={{
+                    alignItems: mine ? "flex-end" : "flex-start",
+                    marginTop: firstInGroup && i > 0 ? 8 : -8,
+                  }}
+                >
+                  <View
+                    style={{
+                      maxWidth: "78%",
+                      paddingHorizontal: 14,
+                      paddingVertical: 9,
+                      backgroundColor: mine ? colors.accent : colors.white,
+                      borderWidth: mine ? 0 : 1,
+                      borderColor: colors.stroke,
+                      borderRadius: 20,
+                      // Square off the corner nearest the sender on the last bubble, like a message tail.
+                      ...(lastInGroup
+                        ? mine
+                          ? { borderBottomRightRadius: 6 }
+                          : { borderBottomLeftRadius: 6 }
+                        : null),
+                    }}
+                  >
+                    <LoopText
+                      variant="body"
+                      style={{ fontSize: 16, lineHeight: 22, color: mine ? colors.white : colors.ink }}
+                    >
+                      {m.body}
+                    </LoopText>
+                  </View>
+                  {lastInGroup ? (
+                    <LoopText variant="meta" style={{ marginTop: 3, marginHorizontal: 6 }}>
+                      {m.time}
+                    </LoopText>
+                  ) : null}
+                </View>
+              );
+            })
           ) : (
             <EmptyState
               title="Your marketplace inquiry is ready"
@@ -128,26 +152,60 @@ export default function ThreadScreen() {
         </ScrollView>
         <View
           style={{
-            padding: 16,
-            gap: 8,
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+            gap: 6,
             borderTopWidth: 1,
             borderColor: colors.stroke,
             backgroundColor: colors.white,
           }}
         >
-          <LoopInput
-            label="Message"
-            placeholder="Coordinate in Loop..."
-            multiline
-            maxLength={2000}
-            value={draft}
-            onChangeText={setDraft}
-            style={{ minHeight: 48, maxHeight: 120 }}
-          />
           {action.error ? <FeedbackBanner tone="error" message={action.error} /> : null}
-          <LoopButton disabled={action.busy || !draft.trim()} onPress={send}>
-            Send
-          </LoopButton>
+          <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 8 }}>
+            <TextInput
+              accessibilityLabel="Message"
+              placeholder="Message"
+              placeholderTextColor={colors.inkSoft}
+              multiline
+              maxLength={2000}
+              value={draft}
+              onChangeText={setDraft}
+              style={{
+                flex: 1,
+                minHeight: 40,
+                maxHeight: 120,
+                paddingHorizontal: 16,
+                paddingTop: Platform.OS === "ios" ? 10 : 8,
+                paddingBottom: Platform.OS === "ios" ? 10 : 8,
+                borderRadius: 20,
+                borderWidth: 1,
+                borderColor: colors.stroke,
+                backgroundColor: colors.surface,
+                color: colors.ink,
+                fontFamily: fonts.body,
+                fontSize: 16,
+              }}
+            />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Send message"
+              accessibilityState={{ disabled: action.busy || !draft.trim() }}
+              disabled={action.busy || !draft.trim()}
+              onPress={send}
+              hitSlop={4}
+              style={({ pressed }) => ({
+                width: 40,
+                height: 40,
+                borderRadius: radius.pill,
+                backgroundColor: colors.accent,
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: action.busy || !draft.trim() ? 0.4 : pressed ? 0.75 : 1,
+              })}
+            >
+              <ArrowUp size={20} color={colors.white} />
+            </Pressable>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>

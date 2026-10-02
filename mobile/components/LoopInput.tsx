@@ -3,21 +3,26 @@ import { colors, fonts, radius } from "../theme";
 import { LoopText } from "./LoopText";
 export function LoopInput({
   label,
+  hideLabel = false,
   style,
   ...props
-}: TextInputProps & { label: string }) {
+}: TextInputProps & { label: string; hideLabel?: boolean }) {
   return (
     <View style={{ gap: 6 }}>
-      <LoopText variant="pill" style={{ color: colors.ink }}>
-        {label}
-      </LoopText>
+      {!hideLabel ? (
+        <LoopText variant="pill" style={{ color: colors.ink }}>
+          {label}
+        </LoopText>
+      ) : null}
       <TextInput
         {...props}
         accessibilityLabel={label}
         placeholderTextColor={colors.inkSoft}
         style={[
           {
-            minHeight: 44,
+            minHeight: 48,
+            width: "100%",
+            maxWidth: "100%",
             borderRadius: radius.small,
             borderWidth: 1,
             borderColor: colors.stroke,

@@ -1,9 +1,8 @@
 import { router } from "expo-router";
 import type { Activity } from "../lib/types";
-import { colors } from "../theme";
-import { LoopCard } from "./LoopCard";
 import { LoopText } from "./LoopText";
 import { LoopButton } from "./LoopButton";
+import { CompactCard } from "./CompactCard";
 export function activityPath(item: Activity) {
   return item.vertical === "marketplace"
     ? `/listings/${item.entityId}`
@@ -12,23 +11,34 @@ export function activityPath(item: Activity) {
       : `/groups/${item.entityId}`;
 }
 export function ActivityCard({ item }: { item: Activity }) {
+  const variant =
+    item.vertical === "rides" ? "rides" : item.vertical === "marketplace" ? "marketplace" : "study";
   return (
-    <LoopCard style={{ backgroundColor: colors.surfaceSoft, padding: 16 }}>
-      <LoopText variant="label">
-        {item.vertical === "marketplace"
-          ? "Marketplace"
-          : item.vertical === "rides"
-            ? "Ride"
-            : "Study"}
-      </LoopText>
-      <LoopText variant="cardHeading">{item.title}</LoopText>
-      <LoopText variant="smallBody">{item.detail}</LoopText>
-      <LoopButton
-        variant={item.vertical === "rides" ? "rides" : "secondary"}
-        onPress={() => router.push(activityPath(item))}
-      >
-        View
-      </LoopButton>
-    </LoopCard>
+    <CompactCard
+      tone={variant}
+      rightWidth={84}
+      left={
+        <>
+          <LoopText variant="eyebrow">
+            {item.vertical === "marketplace" ? "Marketplace" : item.vertical === "rides" ? "Ride" : "Study"}
+          </LoopText>
+          <LoopText variant="cardTitle" numberOfLines={1}>
+            {item.title}
+          </LoopText>
+          <LoopText variant="meta" numberOfLines={1}>
+            {item.detail}
+          </LoopText>
+        </>
+      }
+      right={
+        <LoopButton
+          compact
+          variant={variant}
+          onPress={() => router.push(activityPath(item))}
+        >
+          View
+        </LoopButton>
+      }
+    />
   );
 }

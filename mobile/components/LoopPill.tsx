@@ -8,12 +8,14 @@ export function LoopPill({
   onPress,
   icon,
   soft = true,
+  compact = false,
 }: {
   label: string;
   selected?: boolean;
   onPress?: () => void;
   icon?: React.ReactNode;
   soft?: boolean;
+  compact?: boolean;
 }) {
   const style = {
     borderRadius: radius.pill,
@@ -24,9 +26,9 @@ export function LoopPill({
       : soft
         ? colors.surfaceSoft
         : colors.white,
-    paddingHorizontal: spacing.base,
-    paddingVertical: spacing.compact,
-    minHeight: onPress ? 44 : 32,
+    paddingHorizontal: compact ? 22 : spacing.base,
+    paddingVertical: compact ? 3 : spacing.compact,
+    minHeight: compact ? 30 : onPress ? 44 : 32,
     flexDirection: "row" as const,
     alignItems: "center" as const,
     justifyContent: "center" as const,
@@ -37,6 +39,7 @@ export function LoopPill({
       {icon}
       <LoopText
         variant="pill"
+        numberOfLines={1}
         style={{ color: selected ? colors.white : colors.inkSoft }}
       >
         {label}
@@ -46,9 +49,16 @@ export function LoopPill({
   return onPress ? (
     <Pressable
       onPress={onPress}
+      hitSlop={compact ? { top: 7, bottom: 7 } : undefined}
       accessibilityRole="button"
       accessibilityState={{ selected }}
-      style={({ pressed }) => [style, { opacity: pressed ? 0.75 : 1 }]}
+      style={({ pressed }) => [
+        style,
+        {
+          opacity: pressed ? 0.75 : 1,
+          transform: [{ scale: pressed ? 0.97 : 1 }],
+        },
+      ]}
     >
       {content}
     </Pressable>

@@ -21,7 +21,7 @@ export function LoadingState({
         <View
           key={i}
           style={{
-            height: 112,
+            height: 96,
             borderRadius: radius.small,
             borderWidth: 1,
             borderColor: colors.stroke,
@@ -40,7 +40,7 @@ export function EmptyState({
   message: string;
 }) {
   return (
-    <View style={{ paddingVertical: 32, alignItems: "center", gap: 12 }}>
+    <View style={{ paddingVertical: 24, alignItems: "center", gap: 10 }}>
       <Inbox size={32} color={colors.inkSoft} />
       <LoopText variant="sectionHeading" style={{ textAlign: "center" }}>
         {title}
